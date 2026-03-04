@@ -1,0 +1,25 @@
+# Cache
+.cache/
+cache/
+*.pdf
+*.crdownload
+*.part
+__pycache__/
+
+# Data
+
+dataset_v1/
+datasets/
+articles/
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+
+# Temp
+temp/
+tmp/
+*.tmp
+
+main.ipynb
