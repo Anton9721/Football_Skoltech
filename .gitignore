@@ -9,6 +9,8 @@ __pycache__/
 # Data
 
 dataset_v1/
+output_clips/
+dataset_video_v1/
 datasets/
 articles/
 *.zip
