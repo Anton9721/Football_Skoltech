@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.cluster import KMeans
@@ -60,3 +62,49 @@ def run_clustering(X, y):
     results["silhouette_cosine"] = sil_cos
 
     return results, clusters
+
+def evaluate_model(name, X, y, test_size=0.2, seed=42):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=seed, stratify=y
+    )
+
+    cls_results, y_pred   = run_classification(X_train, y_train, X_test, y_test)
+    clust_results, _      = run_clustering(X, y)
+    sil_euc, sil_cos      = silhouette_scores(X_test, y_test)
+
+    return {
+        "model":          name,
+        "accuracy":       cls_results["accuracy"],
+        "macro_f1":       cls_results["macro_f1"],
+        "cluster_acc":    clust_results["clustering_accuracy"],
+        "sil_euclidean":  round(sil_euc, 4),
+        "sil_cosine":     round(sil_cos, 4),
+    }
+
+
+def compare_models(models: dict, test_size=0.2, seed=42):
+    """
+    models = {
+        "osnet":     (X_match_osnet,    y_match_osnet),
+        "dino":      (X_match_dino,     y_match_dino),
+        "fastreid":  (X_match_fastreid, y_match_fastreid),
+        "clip":      (X_match_clip,     y_match_clip),
+    }
+    """
+    rows = []
+    for name, (X, y) in models.items():
+        print(f"evaluating {name}...")
+        rows.append(evaluate_model(name, X, y, test_size, seed))
+
+    df = (
+        pd.DataFrame(rows)
+        .set_index("model")
+        .round(4)
+        .sort_values("macro_f1", ascending=False)
+    )
+
+    best = df["macro_f1"].idxmax()
+    df["best"] = ""
+    df.loc[best, "best"] = "+"
+
+    return df
