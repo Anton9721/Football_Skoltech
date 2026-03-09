@@ -37,6 +37,11 @@ def clustering_accuracy(y_true, y_pred):
 
 def silhouette_scores(X, y):
 
+    y = np.asarray(y)
+    n_classes = len(np.unique(y))
+    if n_classes < 2 or n_classes >= len(y):
+        return np.nan, np.nan
+
     sil_euc = silhouette_score(X, y, metric="euclidean")
 
     sil_cos = silhouette_score(X, y, metric="cosine")

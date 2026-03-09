@@ -1,5 +1,6 @@
 import io
 import base64
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -27,8 +28,42 @@ LABEL_COLORS = {
 
 # ─── utils ────────────────────────────────────────────────────────────────────
 
-def _to_base64(path: str, max_side: int = 256) -> str:
+def _resolve_image_path(row: pd.Series) -> str:
+    path = str(row.get("crop_path", ""))
+    if path and Path(path).exists():
+        return path
+
+    # Fallback for manifests where absolute image_path is not valid on current machine.
+    if "source_folder" in row and "image_file" in row:
+        fallback = Path(__file__).resolve().parents[1] / "crops" / "output_сrops" / str(row["source_folder"]) / "images" / str(row["image_file"])
+        if fallback.exists():
+            return str(fallback)
+
+    return path
+
+
+def _to_base64_from_row(row: pd.Series, max_side: int = 256) -> str:
+    path = _resolve_image_path(row)
     img = Image.open(path).convert("RGB")
+
+    # If bbox columns are present, render player crop instead of full frame.
+    bbox_cols = ["x1", "y1", "x2", "y2"]
+    if all(c in row.index for c in bbox_cols):
+        try:
+            x1 = int(float(row["x1"]))
+            y1 = int(float(row["y1"]))
+            x2 = int(float(row["x2"]))
+            y2 = int(float(row["y2"]))
+            w, h = img.size
+            x1 = max(0, min(x1, w - 1))
+            y1 = max(0, min(y1, h - 1))
+            x2 = max(1, min(x2, w))
+            y2 = max(1, min(y2, h))
+            if x2 > x1 and y2 > y1:
+                img = img.crop((x1, y1, x2, y2))
+        except Exception:
+            pass
+
     w, h = img.size
     scale = max(w, h) / max_side
     if scale > 1:
@@ -93,7 +128,8 @@ def interactive_embedding_view(
     ----------
     X               : (N, D) эмбеддинги
     y               : (N,)   метки int или str
-    df              : DataFrame с колонками crop_path, game, frame_idx, player_id
+    df              : DataFrame с колонкой crop_path; для корректного кропа из кадра
+                      передайте x1,y1,x2,y2 (и при необходимости source_folder,image_file)
     method          : 'umap' | 'tsne' | 'pca'
     sample_n        : кол-во точек (None = все)
     preload_images  : кодировать картинки заранее для hover
@@ -113,14 +149,16 @@ def interactive_embedding_view(
     if preload_images:
         print("Кодирование изображений...")
         b64_list = []
-        for path in dfs["crop_path"]:
+        for _, row in dfs.iterrows():
             try:
-                b64_list.append(_to_base64(path, max_side=96))
+                b64_list.append(_to_base64_from_row(row, max_side=96))
             except Exception:
                 b64_list.append("")
         print("Готово.")
     else:
         b64_list = [""] * len(dfs)
+
+    aux_cols = [c for c in ["x1", "y1", "x2", "y2", "source_folder", "image_file"] if c in dfs.columns]
 
     df_plot = pd.DataFrame({
         "x":         Z[:, 0],
@@ -128,14 +166,17 @@ def interactive_embedding_view(
         "label":     labels_str,
         "crop_path": dfs["crop_path"].values,
         "b64":       b64_list,
+        "row_idx":   np.arange(len(dfs)),
         **{c: dfs[c].astype(str).values for c in meta_cols},
+        **{c: dfs[c].values for c in aux_cols},
     })
 
-    # customdata порядок: [label, meta..., b64]
-    custom_cols = ["label"] + meta_cols + ["b64"]
+    # customdata порядок: [label, meta..., b64, row_idx]
+    custom_cols = ["label"] + meta_cols + ["b64", "row_idx"]
     customdata  = df_plot[custom_cols].values
 
     b64_idx = len(meta_cols) + 1
+    row_idx_pos = len(meta_cols) + 2
 
     hover_lines = ["<b>%{customdata[0]}</b>"]
     for i, col in enumerate(meta_cols, start=1):
@@ -209,17 +250,14 @@ def interactive_embedding_view(
         cd  = trace.customdata[i]
         lbl = cd[0]
         meta_vals = {meta_cols[j]: cd[j + 1] for j in range(len(meta_cols))}
-        crop_path = df_plot.loc[
-            (df_plot["x"] == trace.x[i]) & (df_plot["y"] == trace.y[i]),
-            "crop_path",
-        ].values
-        crop_path = crop_path[0] if len(crop_path) else None
+        row_idx = int(float(cd[row_idx_pos]))
+        row_data = df_plot.iloc[row_idx]
 
         with img_out:
             clear_output(wait=True)
-            if crop_path:
+            if str(row_data.get("crop_path", "")):
                 try:
-                    b64 = _to_base64(crop_path, max_side=230)
+                    b64 = _to_base64_from_row(row_data, max_side=230)
                     color = LABEL_COLORS.get(lbl, "#888")
                     display(HTML(
                         f'<div style="border:3px solid {color};'

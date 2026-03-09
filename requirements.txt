@@ -12,3 +12,8 @@ PyYAML==6.0.3
 umap-learn==0.5.11
 pynndescent==0.6.0
 joblib==1.5.3
+yacs==0.1.8
+deepdiff==8.6.1
+albumentations==1.4.18
+setuptools<81
+anywidget>=0.9.18

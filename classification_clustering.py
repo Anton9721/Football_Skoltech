@@ -48,7 +48,15 @@ def run_clustering(X, y):
 
     X = l2norm(X)
 
-    kmeans = KMeans(n_clusters=3, random_state=42)
+    n_clusters = len(np.unique(y))
+    if n_clusters < 2:
+        return {
+            "clustering_accuracy": np.nan,
+            "silhouette_euclidean": np.nan,
+            "silhouette_cosine": np.nan,
+        }, np.zeros(len(X), dtype=int)
+
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
 
     clusters = kmeans.fit_predict(X)
 
