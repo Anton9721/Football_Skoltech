@@ -6,6 +6,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, silhouet
 from scipy.optimize import linear_sum_assignment
 
 
+<<<<<<< HEAD
 def crop_accuracy(y_true, y_pred):
     return accuracy_score(y_true, y_pred)
 
@@ -15,6 +16,10 @@ def crop_macro_f1(y_true, y_pred):
 
 
 def clustering_accuracy(y_true, y_pred):
+=======
+def _map_clusters_to_labels(y_true, y_pred):
+
+>>>>>>> beeda27d805a0f95e6ec15a981d53f7375fc8585
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
 
@@ -25,7 +30,40 @@ def clustering_accuracy(y_true, y_pred):
         w[y_pred[i], y_true[i]] += 1
 
     row, col = linear_sum_assignment(w.max() - w)
+<<<<<<< HEAD
     return w[row, col].sum() / len(y_pred)
+=======
+
+    mapping = {r: c for r, c in zip(row, col)}
+
+    y_pred_mapped = np.array([mapping.get(cluster, cluster) for cluster in y_pred])
+
+    return y_pred_mapped, w, row, col
+
+
+def crop_accuracy(y_true, y_pred):
+
+    return accuracy_score(y_true, y_pred)
+
+
+def crop_macro_f1(y_true, y_pred):
+
+    return f1_score(y_true, y_pred, average="macro")
+
+
+def clustering_accuracy(y_true, y_pred):
+
+    y_pred_mapped, _, _, _ = _map_clusters_to_labels(y_true, y_pred)
+
+    return accuracy_score(y_true, y_pred_mapped)
+
+
+def clustering_macro_f1(y_true, y_pred):
+
+    y_pred_mapped, _, _, _ = _map_clusters_to_labels(y_true, y_pred)
+
+    return f1_score(y_true, y_pred_mapped, average="macro")
+>>>>>>> beeda27d805a0f95e6ec15a981d53f7375fc8585
 
 
 def align_clusters(y_true, clusters):
