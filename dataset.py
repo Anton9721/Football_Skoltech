@@ -55,24 +55,29 @@ def get_transforms(model_name="osnet"):
                 std=[0.229, 0.224, 0.225],
             ),
         ])
-    
-    if model_name in ("clip", "clip_vitl"):
-        return transforms.Compose([
-        transforms.ToPILImage(),        
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.48145466, 0.4578275,  0.40821073],
-                             std=[0.26862954, 0.26130258, 0.27577711]),
-    ])
 
-    if model_name in ("dino", "dinov2", "dinov2_large"):
+    if model_name in ("clip", "clip_vitl"):
         return transforms.Compose([
             transforms.ToPILImage(),
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225]),
+            transforms.Normalize(
+                mean=[0.48145466, 0.4578275, 0.40821073],
+                std=[0.26862954, 0.26130258, 0.27577711],
+            ),
         ])
+
+    if model_name in ("dinov2", "dinov2_large"):
+        return transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225],
+            ),
+        ])
+
     raise ValueError("unknown model_name")
 
 

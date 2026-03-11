@@ -3,6 +3,9 @@ import torchreid
 import timm
 import clip
 
+import numpy as np
+
+
 
 class FeatureExtractor:
 
@@ -18,7 +21,6 @@ class FeatureExtractor:
         with torch.cuda.amp.autocast(enabled=self.device == "cuda"):
             emb = self.model(images)
         return emb
-
 
 class CLIPExtractor:
 
