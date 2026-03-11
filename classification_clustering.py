@@ -114,16 +114,13 @@ def run_clustering(X, y, method="kmeans", is_umap=False, is_pca=False, is_scale=
             y_clean = np.asarray(y)[mask]
             clusters_clean = clusters[mask]
 
-            unique_labels = np.unique(clusters_clean)
-            remap = {old: new for new, old in enumerate(unique_labels)}
-            clusters_clean = np.array([remap[c] for c in clusters_clean])
-
             coverage = 1 - results["noise_fraction"]
             results["clustering_accuracy"] = clustering_accuracy(y_clean, clusters_clean) * coverage
             results["macro_f1_cluster"] = macro_f1_clustering(y_clean, clusters_clean) * coverage
         else:
             results["clustering_accuracy"] = np.nan
             results["macro_f1_cluster"] = np.nan
+            
     elif method == "gmm":
         gmm = GaussianMixture(n_components=3, random_state=42)
         clusters = gmm.fit_predict(X)
