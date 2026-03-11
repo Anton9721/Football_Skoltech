@@ -14,6 +14,7 @@ def crop_macro_f1(y_true, y_pred):
     return f1_score(y_true, y_pred, average="macro")
 
 
+
 def clustering_accuracy(y_true, y_pred):
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
@@ -27,35 +28,41 @@ def clustering_accuracy(y_true, y_pred):
     row, col = linear_sum_assignment(w.max() - w)
     return w[row, col].sum() / len(y_pred)
 
-
 def align_clusters(y_true, clusters):
     y_true = np.asarray(y_true)
     clusters = np.asarray(clusters)
-    
-    n_classes = len(np.unique(y_true))
+
+    true_classes = np.unique(y_true)
     unique_clusters = np.unique(clusters)
-    n_clusters = len(unique_clusters)
-    
-    cm = confusion_matrix(y_true, clusters, labels=np.arange(n_clusters) if n_clusters == max(unique_clusters)+1 else unique_clusters)
-    
-    if n_clusters > n_classes:
-        row_ind, col_ind = linear_sum_assignment(-cm)
-        mapping = {}
-        assigned_cols = set(col_ind)
-        
-        for row, col in zip(row_ind, col_ind):
-            mapping[unique_clusters[col]] = row
-        
-        for j, cluster_id in enumerate(unique_clusters):
-            if cluster_id not in mapping:
-                best_class = np.argmax(cm[:, j])
-                mapping[cluster_id] = best_class
-    else:
-        row_ind, col_ind = linear_sum_assignment(-cm)
-        mapping = {unique_clusters[col]: row for row, col in zip(row_ind, col_ind)}
-    
+
+    cm = np.zeros((len(true_classes), len(unique_clusters)), dtype=np.int64)
+    for i, tc in enumerate(true_classes):
+        for j, uc in enumerate(unique_clusters):
+            cm[i, j] = np.sum((y_true == tc) & (clusters == uc))
+
+    row_ind, col_ind = linear_sum_assignment(-cm)
+
+    mapping = {}
+    for row, col in zip(row_ind, col_ind):
+        mapping[unique_clusters[col]] = true_classes[row]
+
+    assigned = set(col_ind)
+    for j, cluster_id in enumerate(unique_clusters):
+        if j not in assigned:
+            best_row = np.argmax(cm[:, j])
+            mapping[cluster_id] = true_classes[best_row]
+
     clusters_aligned = np.array([mapping[c] for c in clusters])
     return clusters_aligned, mapping
+
+
+def macro_f1_clustering(y_true, clusters):
+    y_true = np.asarray(y_true)
+    clusters = np.asarray(clusters)
+
+    mask = clusters != -1
+    clusters_aligned, _ = align_clusters(y_true[mask], clusters[mask])
+    return f1_score(y_true[mask], clusters_aligned, average="macro")
 
 # если нет меток
 def assign_labels_by_size(clusters):
