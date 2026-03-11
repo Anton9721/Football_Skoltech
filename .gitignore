@@ -11,6 +11,7 @@ __pycache__/
 dataset_v1/
 output_clips/
 dataset_video_v1/
+job-44209669_120_model.pth/
 datasets/
 articles/
 *.zip

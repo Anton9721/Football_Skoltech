@@ -15,6 +15,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from IPython.display import display, HTML, clear_output
 import ipywidgets as widgets
+from metrics import align_clusters
 
 
 LABELS = ["team_left", "team_right", "goalkeeper"]
@@ -302,4 +303,67 @@ def plot_confusion_matrix(y_true, y_pred, normalize: bool = False):
         hovertemplate="True: %{y}<br>Predicted: %{x}<br>Value: %{z}<extra></extra>"
     )
     fig.show()
+    return df_cm
+
+
+def plot_confusion_matrix_clustering(y_true, clusters, normalize: bool = False):
+    """
+    Интерактивная confusion matrix для кластеризации.
+    Для HDBSCAN шумовые точки (-1) исключаются из матрицы.
+
+    Parameters
+    ----------
+    y_true     : истинные метки
+    clusters   : метки кластеров
+    normalize  : True — показывает доли, False — абсолютные числа
+    """
+    y_true = np.asarray(y_true)
+    clusters = np.asarray(clusters)
+
+    mask = clusters != -1
+
+    if mask.sum() == 0:
+        raise ValueError("Все объекты помечены как noise (-1), confusion matrix построить нельзя.")
+
+    y_true_clean = y_true[mask]
+    clusters_clean = clusters[mask]
+
+    clusters_aligned, _ = align_clusters(y_true_clean, clusters_clean)
+
+    yt = _to_str_labels(y_true_clean)
+    yp = _to_str_labels(clusters_aligned)
+
+    present = [l for l in LABELS if l in set(yt) | set(yp)]
+    cm = confusion_matrix(yt, yp, labels=present)
+
+    if normalize:
+        row_sums = cm.sum(axis=1, keepdims=True)
+        cm_show = np.where(row_sums > 0, cm / row_sums, 0).round(3)
+        title = "Confusion Matrix for Clustering (normalized, noise excluded)"
+    else:
+        cm_show = cm
+        title = "Confusion Matrix for Clustering (noise excluded)"
+
+    df_cm = pd.DataFrame(cm_show, index=present, columns=present)
+
+    noise_fraction = 1.0 - mask.mean()
+
+    fig = px.imshow(
+        df_cm,
+        text_auto=".2%" if normalize else "d",
+        color_continuous_scale="Blues",
+        title=f"{title}<br><sup>Noise fraction: {noise_fraction:.2%}</sup>",
+        labels=dict(x="Predicted cluster", y="True label"),
+    )
+    fig.update_layout(
+        height=460,
+        coloraxis_showscale=False,
+        font=dict(size=13),
+        margin=dict(l=20, r=20, t=70, b=20),
+    )
+    fig.update_traces(
+        hovertemplate="True: %{y}<br>Predicted: %{x}<br>Value: %{z}<extra></extra>"
+    )
+    fig.show()
+
     return df_cm
