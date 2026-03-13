@@ -1,32 +1,32 @@
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.neural_network import MLPClassifier
 from sklearn.cluster import KMeans
-from sklearn.mixture import GaussianMixture
-from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+from sklearn.mixture import GaussianMixture
+from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
 
-import umap
 import hdbscan
-
+import umap
 
 from metrics import (
+    clustering_accuracy,
     crop_accuracy,
     crop_macro_f1,
-    clustering_accuracy,
-    macro_f1_clustering
+    macro_f1_clustering,
 )
 
+
 def l2norm(X, eps=1e-12):
+    X = np.asarray(X)
     norms = np.linalg.norm(X, axis=1, keepdims=True)
     return X / np.clip(norms, eps, None)
 
 
-def run_classification(X, y, method='log_reg', test_size=0.2, seed=42):
+def run_classification(X, y, method="log_reg", test_size=0.2, seed=42):
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=test_size, random_state=seed, stratify=y
     )
@@ -34,9 +34,9 @@ def run_classification(X, y, method='log_reg', test_size=0.2, seed=42):
     X_train = l2norm(X_train)
     X_test = l2norm(X_test)
 
-    if method == 'log_reg':
-        clf = LogisticRegression(max_iter=2000)
-    elif method == 'mlp':
+    if method == "log_reg":
+        clf = LogisticRegression(max_iter=2000, random_state=seed)
+    elif method == "mlp":
         clf = MLPClassifier(
             hidden_layer_sizes=(256,),
             activation="relu",
@@ -55,21 +55,18 @@ def run_classification(X, y, method='log_reg', test_size=0.2, seed=42):
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
-    results = {
+    return {
         "accuracy": crop_accuracy(y_test, y_pred),
         "macro_f1": crop_macro_f1(y_test, y_pred),
-    }
-    return results, y_pred
+    }, y_pred
 
-def run_clustering(X, y, method="kmeans", is_umap=False, is_pca=False, is_scale=False):
 
+def _apply_preprocessing(X, is_umap=False, is_pca=False, is_scale=False, seed=42):
     X = l2norm(X)
 
     if is_pca:
-        # n_comp = int(np.sqrt(X.shape[1]))
-        n_comp = 31
-        pca = PCA(n_components=n_comp)
-        X = pca.fit_transform(X)
+        n_comp = min(31, X.shape[1], max(2, X.shape[0] - 1))
+        X = PCA(n_components=n_comp, random_state=seed).fit_transform(X)
 
     if is_umap:
         reducer = umap.UMAP(
@@ -77,22 +74,44 @@ def run_clustering(X, y, method="kmeans", is_umap=False, is_pca=False, is_scale=
             n_neighbors=30,
             min_dist=0.0,
             metric="cosine",
-            random_state=42
+            random_state=seed,
         )
-        # {'n_components': 12, 'n_neighbors': 83, 'min_dist': 0.42632588765351775, 'metric': 'euclidean'}
         X = reducer.fit_transform(X)
 
     if is_scale:
-        scaler = StandardScaler()
-        X = scaler.fit_transform(X)
+        X = StandardScaler().fit_transform(X)
+
+    return X
+
+
+def run_clustering(
+    X,
+    y,
+    method="kmeans",
+    is_umap=False,
+    is_pca=False,
+    is_scale=False,
+    seed=42,
+):
+    X_proc = _apply_preprocessing(
+        X,
+        is_umap=is_umap,
+        is_pca=is_pca,
+        is_scale=is_scale,
+        seed=seed,
+    )
+
+    n_classes = int(len(np.unique(y)))
 
     if method == "kmeans":
-        kmeans = KMeans(n_clusters=3, random_state=42)
-        clusters = kmeans.fit_predict(X)
-
-        results = {}
-        results["clustering_accuracy"] = clustering_accuracy(y, clusters)
-        results["macro_f1_cluster"] = macro_f1_clustering(y, clusters)
+        clusterer = KMeans(n_clusters=n_classes, random_state=seed)
+        clusters = clusterer.fit_predict(X_proc)
+        results = {
+            "clustering_accuracy": clustering_accuracy(y, clusters),
+            "macro_f1_cluster": macro_f1_clustering(y, clusters),
+            "n_clusters": int(len(np.unique(clusters))),
+            "noise_fraction": 0.0,
+        }
 
     elif method == "hdbscan":
         clusterer = hdbscan.HDBSCAN(
@@ -102,32 +121,33 @@ def run_clustering(X, y, method="kmeans", is_umap=False, is_pca=False, is_scale=
             cluster_selection_method="eom",
             prediction_data=True,
         )
-        clusters = clusterer.fit_predict(X)
+        clusters = clusterer.fit_predict(X_proc)
 
-        results = {}
-        results["n_clusters"] = len(set(clusters)) - (1 if -1 in clusters else 0)
-        results["noise_fraction"] = float(np.mean(clusters == -1))
+        results = {
+            "n_clusters": int(len(set(clusters)) - (1 if -1 in clusters else 0)),
+            "noise_fraction": float(np.mean(clusters == -1)),
+        }
 
         mask = clusters != -1
-
         if mask.sum() > 0 and len(np.unique(clusters[mask])) >= 2:
             y_clean = np.asarray(y)[mask]
             clusters_clean = clusters[mask]
-
-            coverage = 1 - results["noise_fraction"]
+            coverage = 1.0 - results["noise_fraction"]
             results["clustering_accuracy"] = clustering_accuracy(y_clean, clusters_clean) * coverage
             results["macro_f1_cluster"] = macro_f1_clustering(y_clean, clusters_clean) * coverage
         else:
             results["clustering_accuracy"] = np.nan
             results["macro_f1_cluster"] = np.nan
-            
-    elif method == "gmm":
-        gmm = GaussianMixture(n_components=3, random_state=42)
-        clusters = gmm.fit_predict(X)
 
-        results = {}
-        results["clustering_accuracy"] = clustering_accuracy(y, clusters)
-        results["macro_f1_cluster"] = macro_f1_clustering(y, clusters)
+    elif method == "gmm":
+        clusterer = GaussianMixture(n_components=n_classes, random_state=seed)
+        clusters = clusterer.fit_predict(X_proc)
+        results = {
+            "clustering_accuracy": clustering_accuracy(y, clusters),
+            "macro_f1_cluster": macro_f1_clustering(y, clusters),
+            "n_clusters": int(len(np.unique(clusters))),
+            "noise_fraction": 0.0,
+        }
 
     else:
         raise ValueError(f"not implemented method {method}")
@@ -135,120 +155,99 @@ def run_clustering(X, y, method="kmeans", is_umap=False, is_pca=False, is_scale=
     return results, clusters
 
 
-def evaluate_model_classification(name, X, y, method):
-    cls_results, y_pred   = run_classification(X, y, method)
+def evaluate_model_classification(name, X, y, method, test_size=0.2, seed=42):
+    cls_results, _ = run_classification(
+        X,
+        y,
+        method=method,
+        test_size=test_size,
+        seed=seed,
+    )
 
     return {
-        "model":          name,
-        "accuracy":       cls_results["accuracy"],
-        "macro_f1":       cls_results["macro_f1"],
+        "model": name,
+        "accuracy": cls_results["accuracy"],
+        "macro_f1": cls_results["macro_f1"],
     }
 
 
-def evaluate_model_clustering(name, X, y, method):
-    
-    clust_results_0, _      = run_clustering(X, y, method, is_umap=False, is_pca=False, is_scale=False)
-    clust_results_1, _      = run_clustering(X, y, method, is_umap=True, is_pca=False, is_scale=False)
-    clust_results_2, _      = run_clustering(X, y, method, is_umap=True, is_pca=True, is_scale=False)
-    clust_results_3, _      = run_clustering(X, y, method, is_umap=True, is_pca=True, is_scale=True)
+def evaluate_model_clustering(name, X, y, method, seed=42):
+    variants = [
+        ("", dict(is_umap=False, is_pca=False, is_scale=False)),
+        ("_umap", dict(is_umap=True, is_pca=False, is_scale=False)),
+        ("_umap_pca", dict(is_umap=True, is_pca=True, is_scale=False)),
+        ("_umap_pca_scale", dict(is_umap=True, is_pca=True, is_scale=True)),
+    ]
 
+    out = {"model": name}
+    for suffix, cfg in variants:
+        res, _ = run_clustering(X, y, method=method, seed=seed, **cfg)
+        out[f"accuracy{suffix}"] = res.get("clustering_accuracy", np.nan)
+        out[f"macro_f1{suffix}"] = res.get("macro_f1_cluster", np.nan)
+        out[f"n_clusters{suffix}"] = res.get("n_clusters", np.nan)
+        out[f"noise_fraction{suffix}"] = res.get("noise_fraction", np.nan)
 
-    return {
-        "model":          name,
-        "accuracy":    clust_results_0["clustering_accuracy"],
-        "macro_f1": clust_results_0["macro_f1_cluster"],
-
-        "accuracy_umap":    clust_results_1["clustering_accuracy"],
-        "macro_f1_umap": clust_results_1["macro_f1_cluster"],
-
-        "accuracy_umap_pca":    clust_results_2["clustering_accuracy"],
-        "macro_f1_umap_pca": clust_results_2["macro_f1_cluster"],
-
-        "accuracy_umap_pca_scale":    clust_results_3["clustering_accuracy"],
-        "macro_f1_umap_pca_scale": clust_results_3["macro_f1_cluster"],
-    }
+    return out
 
 
 def compare_models(models: dict, test_size=0.2, seed=42):
-    """
-    models = {
-        "osnet":     (X_match_osnet,    y_match_osnet),
-        "dino":      (X_match_dino,     y_match_dino),
-        "fastreid":  (X_match_fastreid, y_match_fastreid),
-        "clip":      (X_match_clip,     y_match_clip),
-    }
-    """
     rows_class = []
     rows_kmeans = []
     rows_hdbscan = []
     rows_gmm = []
 
+    for name, (X, y) in models.items():
+        print(f"evaluating {name} for classification (log_reg, mlp)...")
+        log_reg = evaluate_model_classification(name, X, y, method="log_reg", test_size=test_size, seed=seed)
+        mlp = evaluate_model_classification(name, X, y, method="mlp", test_size=test_size, seed=seed)
+        rows_class.append({
+            "model": name,
+            "log_reg_accuracy": log_reg["accuracy"],
+            "log_reg_macro_f1": log_reg["macro_f1"],
+            "mlp_accuracy": mlp["accuracy"],
+            "mlp_macro_f1": mlp["macro_f1"],
+            "macro_f1_delta_mlp_minus_log_reg": mlp["macro_f1"] - log_reg["macro_f1"],
+        })
 
     for name, (X, y) in models.items():
-        print(f"evaluating {name} for classification...")
-        rows_class.append(evaluate_model_classification(name, X, y, test_size, seed))
+        print(f"evaluating {name} for kmeans...")
+        rows_kmeans.append(evaluate_model_clustering(name, X, y, method="kmeans", seed=seed))
 
-    
-    for name, (X, y) in models.items():
-        print(f"evaluating {name} for kmaens...")
-        rows_kmeans.append(evaluate_model_clustering(name, X, y, 'kmeans'))
-
-        
     for name, (X, y) in models.items():
         print(f"evaluating {name} for hdbscan...")
-        rows_hdbscan.append(evaluate_model_clustering(name, X, y, 'hdbscan'))
+        rows_hdbscan.append(evaluate_model_clustering(name, X, y, method="hdbscan", seed=seed))
 
     for name, (X, y) in models.items():
         print(f"evaluating {name} for gmm...")
-        rows_gmm.append(evaluate_model_clustering(name, X, y, 'gmm'))
+        rows_gmm.append(evaluate_model_clustering(name, X, y, method="gmm", seed=seed))
 
-    df_class = (
-        pd.DataFrame(rows_class)
-        .set_index("model")
-        .round(4)
-        .sort_values("mlp_macro_f1", ascending=False)
-    )
-
-    df_kmeans = (
-        pd.DataFrame(rows_kmeans)
-        .set_index("model")
-        .round(4)
-        .sort_values("macro_f1", ascending=False)
-    )
-
-    df_hdbscan = (
-        pd.DataFrame(rows_hdbscan)
-        .set_index("model")
-        .round(4)
-        .sort_values("macro_f1", ascending=False)
-    )
-
-    df_gmm = (
-        pd.DataFrame(rows_gmm)
-        .set_index("model")
-        .round(4)
-        .sort_values("macro_f1", ascending=False)
-    )
-
+    df_class = pd.DataFrame(rows_class).set_index("model").round(4).sort_values("mlp_macro_f1", ascending=False)
+    df_kmeans = pd.DataFrame(rows_kmeans).set_index("model").round(4).sort_values("macro_f1", ascending=False)
+    df_hdbscan = pd.DataFrame(rows_hdbscan).set_index("model").round(4).sort_values("macro_f1", ascending=False)
+    df_gmm = pd.DataFrame(rows_gmm).set_index("model").round(4).sort_values("macro_f1", ascending=False)
 
     return df_class, df_kmeans, df_hdbscan, df_gmm
 
-def evaluate_single_method(models: dict, method):
+
+def evaluate_single_method(models: dict, method, test_size=0.2, seed=42):
     rows = []
 
-    if method in ('log_reg', 'mlp'):  
+    if method in ("log_reg", "mlp"):
         for name, (X, y) in models.items():
             print(f"evaluating {name} for {method}...")
-            rows.append(evaluate_model_classification(name, X, y, method))
+            rows.append(
+                evaluate_model_classification(
+                    name,
+                    X,
+                    y,
+                    method=method,
+                    test_size=test_size,
+                    seed=seed,
+                )
+            )
     else:
         for name, (X, y) in models.items():
             print(f"evaluating {name} for {method}...")
-            rows.append(evaluate_model_clustering(name, X, y, method))
+            rows.append(evaluate_model_clustering(name, X, y, method=method, seed=seed))
 
-    df = (
-        pd.DataFrame(rows)
-        .set_index("model")
-        .round(4)
-    )
-
-    return df
+    return pd.DataFrame(rows).set_index("model").round(4)
