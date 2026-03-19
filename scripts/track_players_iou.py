@@ -1,8 +1,16 @@
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 import cv2
+import numpy as np
 import pandas as pd
+import torch
+from PIL import Image
+
+try:
+    from torchvision import transforms
+except Exception:
+    transforms = None
 
 
 def iou_xyxy(boxA, boxB):
@@ -134,16 +142,18 @@ def assign_tracks(csv_path, iou_thr=0.3, max_age=8):
         tracked = tracker.update(detections, frame_idx)
 
         for obj in tracked:
-            tracked_rows.append({
-                "frame_idx": frame_idx,
-                "player_id": obj["player_id"],
-                "track_id": obj["track_id"],
-                "x1": obj["x1"],
-                "y1": obj["y1"],
-                "x2": obj["x2"],
-                "y2": obj["y2"],
-                "role_name": obj["role_name"],
-            })
+            tracked_rows.append(
+                {
+                    "frame_idx": frame_idx,
+                    "player_id": obj["player_id"],
+                    "track_id": obj["track_id"],
+                    "x1": obj["x1"],
+                    "y1": obj["y1"],
+                    "x2": obj["x2"],
+                    "y2": obj["y2"],
+                    "role_name": obj["role_name"],
+                }
+            )
 
     tracked_df = pd.DataFrame(tracked_rows)
     return tracked_df
@@ -165,10 +175,7 @@ def render_tracked_video(video_path, tracked_df, output_path, max_frames=None):
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     writer = cv2.VideoWriter(
-        str(output_path),
-        cv2.VideoWriter_fourcc(*"mp4v"),
-        fps,
-        (width, height)
+        str(output_path), cv2.VideoWriter_fourcc(*"mp4v"), fps, (width, height)
     )
 
     tracked_by_frame = {
@@ -176,7 +183,9 @@ def render_tracked_video(video_path, tracked_df, output_path, max_frames=None):
         for frame_idx, group in tracked_df.groupby("frame_idx")
     }
 
-    total_frames = frame_count if max_frames is None else min(frame_count, int(max_frames))
+    total_frames = (
+        frame_count if max_frames is None else min(frame_count, int(max_frames))
+    )
 
     for frame_idx in range(total_frames):
         ok, frame = cap.read()
@@ -198,7 +207,7 @@ def render_tracked_video(video_path, tracked_df, output_path, max_frames=None):
                 0.6,
                 (0, 255, 0),
                 2,
-                cv2.LINE_AA
+                cv2.LINE_AA,
             )
 
         writer.write(frame)
@@ -233,7 +242,9 @@ def run_iou_tracking(
 
     if render_video:
         if output_video_path is None:
-            raise ValueError("output_video_path must be provided when render_video=True")
+            raise ValueError(
+                "output_video_path must be provided when render_video=True"
+            )
 
         render_tracked_video(
             video_path=video_path,
@@ -246,34 +257,31 @@ def run_iou_tracking(
         "num_rows": int(len(tracked_df)),
         "num_frames": int(tracked_df["frame_idx"].nunique()) if len(tracked_df) else 0,
         "num_tracks": int(tracked_df["track_id"].nunique()) if len(tracked_df) else 0,
-        "output_csv_path": str(output_csv_path) if output_csv_path is not None else None,
-        "output_video_path": str(output_video_path) if output_video_path is not None else None,
+        "output_csv_path": (
+            str(output_csv_path) if output_csv_path is not None else None
+        ),
+        "output_video_path": (
+            str(output_video_path) if output_video_path is not None else None
+        ),
     }
 
     return tracked_df, summary
-
-import numpy as np
-import torch
-from PIL import Image
-
-try:
-    from torchvision import transforms
-except Exception:
-    transforms = None
 
 
 def _default_osnet_transform():
     if transforms is None:
         raise ImportError("torchvision is required for image transforms")
 
-    return transforms.Compose([
-        transforms.Resize((256, 128)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225],
-        ),
-    ])
+    return transforms.Compose(
+        [
+            transforms.Resize((256, 128)),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225],
+            ),
+        ]
+    )
 
 
 def _crop_from_frame(frame_bgr, x1, y1, x2, y2, pad=0):
@@ -304,10 +312,11 @@ def _prepare_batch(crops_rgb, transform):
 
 
 def _transform_features_for_inference(X, is_umap=True, is_pca=False, is_scale=False):
-    from classification_clustering import l2norm
+    import umap
     from sklearn.decomposition import PCA
     from sklearn.preprocessing import StandardScaler
-    import umap
+
+    from classification_clustering import l2norm
 
     X = l2norm(X)
 
@@ -346,7 +355,9 @@ def extract_embeddings_for_tracked_video(
     from models import load_finetuned_model
 
     video_path = Path(video_path)
-    tracked_df = tracked_df.sort_values(["frame_idx", "track_id"]).reset_index(drop=True)
+    tracked_df = tracked_df.sort_values(["frame_idx", "track_id"]).reset_index(
+        drop=True
+    )
 
     if transform is None:
         transform = _default_osnet_transform()
@@ -363,14 +374,16 @@ def extract_embeddings_for_tracked_video(
     }
 
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    total_frames = frame_count if max_frames is None else min(frame_count, int(max_frames))
+    total_frames = (
+        frame_count if max_frames is None else min(frame_count, int(max_frames))
+    )
 
     rows = []
     batch_crops = []
     batch_meta = []
 
     def flush_batch():
-        nonlocal batch_crops, batch_meta, rows
+        nonlocal batch_crops, batch_meta
         if not batch_crops:
             return
 
@@ -407,14 +420,16 @@ def extract_embeddings_for_tracked_video(
                 continue
 
             batch_crops.append(crop_rgb)
-            batch_meta.append({
-                "frame_idx": int(frame_idx),
-                "track_id": int(ann["track_id"]),
-                "x1": int(x1),
-                "y1": int(y1),
-                "x2": int(x2),
-                "y2": int(y2),
-            })
+            batch_meta.append(
+                {
+                    "frame_idx": int(frame_idx),
+                    "track_id": int(ann["track_id"]),
+                    "x1": int(x1),
+                    "y1": int(y1),
+                    "x2": int(x2),
+                    "y2": int(y2),
+                }
+            )
 
             if len(batch_crops) >= batch_size:
                 flush_batch()
@@ -452,13 +467,15 @@ def build_track_embeddings(
         x_center = ((group["x1"] + group["x2"]) / 2.0).mean()
         y_center = ((group["y1"] + group["y2"]) / 2.0).mean()
 
-        track_rows.append({
-            "track_id": int(track_id),
-            "n_samples": int(len(group)),
-            "mean_x_center": float(x_center),
-            "mean_y_center": float(y_center),
-            "track_embedding": track_emb,
-        })
+        track_rows.append(
+            {
+                "track_id": int(track_id),
+                "n_samples": int(len(group)),
+                "mean_x_center": float(x_center),
+                "mean_y_center": float(y_center),
+                "track_embedding": track_emb,
+            }
+        )
 
     track_df = pd.DataFrame(track_rows)
     if len(track_df) == 0:
@@ -503,7 +520,9 @@ def map_clusters_to_roles(track_cluster_df):
     # smallest cluster -> goalkeeper
     goalkeeper_cluster = cluster_stats.sort_values("n_tracks").iloc[0]["cluster_id"]
 
-    field_clusters = cluster_stats[cluster_stats["cluster_id"] != goalkeeper_cluster].copy()
+    field_clusters = cluster_stats[
+        cluster_stats["cluster_id"] != goalkeeper_cluster
+    ].copy()
     field_clusters = field_clusters.sort_values("mean_x_center")
 
     left_cluster = field_clusters.iloc[0]["cluster_id"]
@@ -552,10 +571,7 @@ def render_role_video(
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     writer = cv2.VideoWriter(
-        str(output_path),
-        cv2.VideoWriter_fourcc(*"mp4v"),
-        fps,
-        (width, height)
+        str(output_path), cv2.VideoWriter_fourcc(*"mp4v"), fps, (width, height)
     )
 
     color_map = {
@@ -570,7 +586,9 @@ def render_role_video(
         for frame_idx, group in labeled_df.groupby("frame_idx")
     }
 
-    total_frames = frame_count if max_frames is None else min(frame_count, int(max_frames))
+    total_frames = (
+        frame_count if max_frames is None else min(frame_count, int(max_frames))
+    )
 
     for frame_idx in range(total_frames):
         ok, frame = cap.read()
@@ -595,7 +613,7 @@ def render_role_video(
                 0.6,
                 color,
                 2,
-                cv2.LINE_AA
+                cv2.LINE_AA,
             )
 
         writer.write(frame)
@@ -670,8 +688,12 @@ def run_role_inference_video(
         "num_embedding_rows": int(len(emb_df)),
         "num_track_embeddings": int(len(track_df)),
         "num_role_tracks": int(len(track_role_df)),
-        "labeled_csv_path": str(labeled_csv_path) if labeled_csv_path is not None else None,
-        "labeled_video_path": str(labeled_video_path) if labeled_video_path is not None else None,
+        "labeled_csv_path": (
+            str(labeled_csv_path) if labeled_csv_path is not None else None
+        ),
+        "labeled_video_path": (
+            str(labeled_video_path) if labeled_video_path is not None else None
+        ),
     }
 
     return {

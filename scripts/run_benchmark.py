@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -10,7 +10,6 @@ import torch
 from classification_clustering import evaluate_single_method
 from dataset import load_manifest
 from extract_embeddings import extract_all_models
-
 
 CLASS_METHODS = ("log_reg", "mlp")
 CLUSTER_METHODS = ("kmeans", "hdbscan", "gmm")
@@ -27,7 +26,9 @@ def flip_lr_label(label: str) -> str:
 
 def discover_base_games(df: pd.DataFrame) -> list[str]:
     games = set(df["game"].astype(str).unique().tolist())
-    bases = sorted({g[:-3] for g in games if g.endswith("_H1") and f"{g[:-3]}_H2" in games})
+    bases = sorted(
+        {g[:-3] for g in games if g.endswith("_H1") and f"{g[:-3]}_H2" in games}
+    )
     return bases
 
 
@@ -43,7 +44,9 @@ def build_match_df(df: pd.DataFrame, base_game: str) -> pd.DataFrame:
     return out
 
 
-def _method_table_to_long(df_method: pd.DataFrame, section: str, method: str, base_game: str, seed: int):
+def _method_table_to_long(
+    df_method: pd.DataFrame, section: str, method: str, base_game: str, seed: int
+):
     rows = []
     df_flat = df_method.reset_index().rename(columns={"model": "embedding_model"})
     for rec in df_flat.to_dict("records"):
@@ -98,7 +101,9 @@ def run_benchmark(
         )
 
         for method in CLASS_METHODS:
-            df_method = evaluate_single_method(embeddings, method=method, test_size=test_size, seed=seed)
+            df_method = evaluate_single_method(
+                embeddings, method=method, test_size=test_size, seed=seed
+            )
             all_rows.extend(
                 _method_table_to_long(
                     df_method,
@@ -127,26 +132,34 @@ def run_benchmark(
     if df_all.empty:
         raise RuntimeError("No benchmark rows were produced.")
 
-    df_all = df_all.sort_values(["benchmark_section", "method", "embedding_model", "base_game"]).reset_index(drop=True)
+    df_all = df_all.sort_values(
+        ["benchmark_section", "method", "embedding_model", "base_game"]
+    ).reset_index(drop=True)
     all_path = output_dir / "experiments_unified.csv"
     df_all.to_csv(all_path, index=False)
 
     # Aggregated view for quick comparison across many matches.
-    metric_cols = [c for c in [
-        "accuracy",
-        "macro_f1",
-        "accuracy_umap",
-        "macro_f1_umap",
-        "accuracy_umap_pca",
-        "macro_f1_umap_pca",
-        "accuracy_umap_pca_scale",
-        "macro_f1_umap_pca_scale",
-        "noise_fraction",
-        "n_clusters",
-    ] if c in df_all.columns]
+    metric_cols = [
+        c
+        for c in [
+            "accuracy",
+            "macro_f1",
+            "accuracy_umap",
+            "macro_f1_umap",
+            "accuracy_umap_pca",
+            "macro_f1_umap_pca",
+            "accuracy_umap_pca_scale",
+            "macro_f1_umap_pca_scale",
+            "noise_fraction",
+            "n_clusters",
+        ]
+        if c in df_all.columns
+    ]
 
     agg = (
-        df_all.groupby(["benchmark_section", "method", "embedding_model"], dropna=False)[metric_cols]
+        df_all.groupby(
+            ["benchmark_section", "method", "embedding_model"], dropna=False
+        )[metric_cols]
         .agg(["mean", "std"])
         .round(4)
     )
@@ -162,9 +175,16 @@ def run_benchmark(
 
 def parse_args():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--manifest", type=str, default="dataset_v1/manifest_with_splits.csv")
+    ap.add_argument(
+        "--manifest", type=str, default="dataset_v1/manifest_with_splits.csv"
+    )
     ap.add_argument("--output", type=str, default="outputs/benchmark")
-    ap.add_argument("--models", nargs="+", default=list(DEFAULT_EMBED_MODELS), choices=["dino", "osnet"])
+    ap.add_argument(
+        "--models",
+        nargs="+",
+        default=list(DEFAULT_EMBED_MODELS),
+        choices=["dino", "osnet"],
+    )
     ap.add_argument("--test_size", type=float, default=0.2)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--max_games", type=int, default=None)
