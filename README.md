@@ -130,15 +130,14 @@ dataset_v1/
 └── sources_index.csv           # per-game stats
 ```
 
-**3. Run benchmark (all models)**
+**3. Run benchmark and view results**
 
-```bash
-python scripts/run_benchmark.py
-```
+Open `notebooks/2.0-benchmark.ipynb` in Jupyter and run all cells — this will produce model comparison tables and metrics.
 
-**4. Fine-tune with metric learning**
+**4. Embedding analysis and visualization**
 
-See `notebooks/2.0-benchmark.ipynb` — call `finetune(args)` with your config.
+Open `notebooks/1.0-analytics.ipynb` in Jupyter and run all cells — this will produce UMAP plots and embedding visualizations.
+
 
 ## Evaluation metrics
 
