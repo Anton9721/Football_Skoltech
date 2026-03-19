@@ -74,7 +74,16 @@ def expand_bbox(x1, y1, x2, y2, w, h, pad: int):
 
 
 def pick_image_path(images_dir: Path, row: pd.Series) -> Path:
-    for key in ["image_path", "img_path", "path", "filename", "file", "image_file", "frame_path", "frame"]:
+    for key in [
+        "image_path",
+        "img_path",
+        "path",
+        "filename",
+        "file",
+        "image_file",
+        "frame_path",
+        "frame",
+    ]:
         if key in row.index and pd.notna(row[key]):
             cand = images_dir / str(row[key])
             if cand.exists():
@@ -84,8 +93,10 @@ def pick_image_path(images_dir: Path, row: pd.Series) -> Path:
         idx = safe_int(row["frame_idx"])
         if idx is not None:
             patterns = [
-                f"*{idx}*.jpg", f"*{idx}*.png",
-                f"*{idx:06d}*.jpg", f"*{idx:06d}*.png",
+                f"*{idx}*.jpg",
+                f"*{idx}*.png",
+                f"*{idx:06d}*.jpg",
+                f"*{idx:06d}*.png",
             ]
             for pat in patterns:
                 hits = list(images_dir.glob(pat))
@@ -118,7 +129,15 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
             colmap[c] = "player_id"
         elif lc in ["frame_idx", "frame_id", "frame", "frame_num"]:
             colmap[c] = "frame_idx"
-        elif lc in ["image_file", "image", "img", "filename", "file", "path", "image_path"]:
+        elif lc in [
+            "image_file",
+            "image",
+            "img",
+            "filename",
+            "file",
+            "path",
+            "image_path",
+        ]:
             colmap[c] = "image_file"
 
     df = df.rename(columns=colmap)
@@ -126,12 +145,20 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     required = ["x1", "y1", "x2", "y2", "role_name", "left2right"]
     missing = [c for c in required if c not in df.columns]
     if missing:
-        raise ValueError(f"Missing required columns: {missing}. Available: {list(df.columns)}")
+        raise ValueError(
+            f"Missing required columns: {missing}. Available: {list(df.columns)}"
+        )
 
     return df
 
 
-def build_dataset_for_game_images(game_dir: Path, out_crops_dir: Path, min_wh: int = 20, jpeg_quality: int = 90, pad: int = 0):
+def build_dataset_for_game_images(
+    game_dir: Path,
+    out_crops_dir: Path,
+    min_wh: int = 20,
+    jpeg_quality: int = 90,
+    pad: int = 0,
+):
     images_dir = game_dir / "images"
     csv_path = find_players_csv(game_dir)
 
@@ -192,20 +219,27 @@ def build_dataset_for_game_images(game_dir: Path, out_crops_dir: Path, min_wh: i
             crop_name += ".jpg"
 
             out_path = out_crops_dir / crop_name
-            cv2.imwrite(str(out_path), crop, [int(cv2.IMWRITE_JPEG_QUALITY), int(jpeg_quality)])
+            cv2.imwrite(
+                str(out_path), crop, [int(cv2.IMWRITE_JPEG_QUALITY), int(jpeg_quality)]
+            )
 
-            records.append({
-                "crop_path": out_path.as_posix(),
-                "label": label,
-                "game": game_dir.name,
-                "src_video": None,
-                "src_image": img_path.as_posix(),
-                "x1": x1, "y1": y1, "x2": x2, "y2": y2,
-                "frame_idx": frame_idx,
-                "player_id": player_id,
-                "role_name": row["role_name"],
-                "left2right": int(row["left2right"]),
-            })
+            records.append(
+                {
+                    "crop_path": out_path.as_posix(),
+                    "label": label,
+                    "game": game_dir.name,
+                    "src_video": None,
+                    "src_image": img_path.as_posix(),
+                    "x1": x1,
+                    "y1": y1,
+                    "x2": x2,
+                    "y2": y2,
+                    "frame_idx": frame_idx,
+                    "player_id": player_id,
+                    "role_name": row["role_name"],
+                    "left2right": int(row["left2right"]),
+                }
+            )
 
         except Exception:
             bad += 1
@@ -247,7 +281,9 @@ def build_dataset_for_game_video(
     bad = 0
 
     grouped = df.groupby("frame_idx", sort=True)
-    for frame_idx, frame_df in tqdm(grouped, total=len(grouped), desc=f"{game_dir.name} [video]"):
+    for frame_idx, frame_df in tqdm(
+        grouped, total=len(grouped), desc=f"{game_dir.name} [video]"
+    ):
         if frame_stride > 1 and (int(frame_idx) % frame_stride) != 0:
             continue
 
@@ -283,28 +319,41 @@ def build_dataset_for_game_video(
                     continue
 
                 label = infer_label(row["role_name"], row["left2right"])
-                player_id = safe_int(row["player_id"]) if "player_id" in row.index else None
+                player_id = (
+                    safe_int(row["player_id"]) if "player_id" in row.index else None
+                )
 
-                crop_name = f"{game_dir.name}__{video_path.stem}__f{int(frame_idx)}__j{int(j)}"
+                crop_name = (
+                    f"{game_dir.name}__{video_path.stem}__f{int(frame_idx)}__j{int(j)}"
+                )
                 if player_id is not None:
                     crop_name += f"__p{player_id}"
                 crop_name += ".jpg"
 
                 out_path = out_crops_dir / crop_name
-                cv2.imwrite(str(out_path), crop, [int(cv2.IMWRITE_JPEG_QUALITY), int(jpeg_quality)])
+                cv2.imwrite(
+                    str(out_path),
+                    crop,
+                    [int(cv2.IMWRITE_JPEG_QUALITY), int(jpeg_quality)],
+                )
 
-                records.append({
-                    "crop_path": out_path.as_posix(),
-                    "label": label,
-                    "game": game_dir.name,
-                    "src_video": video_path.as_posix(),
-                    "src_image": None,
-                    "x1": x1, "y1": y1, "x2": x2, "y2": y2,
-                    "frame_idx": int(frame_idx),
-                    "player_id": player_id,
-                    "role_name": row["role_name"],
-                    "left2right": int(row["left2right"]),
-                })
+                records.append(
+                    {
+                        "crop_path": out_path.as_posix(),
+                        "label": label,
+                        "game": game_dir.name,
+                        "src_video": video_path.as_posix(),
+                        "src_image": None,
+                        "x1": x1,
+                        "y1": y1,
+                        "x2": x2,
+                        "y2": y2,
+                        "frame_idx": int(frame_idx),
+                        "player_id": player_id,
+                        "role_name": row["role_name"],
+                        "left2right": int(row["left2right"]),
+                    }
+                )
 
         except Exception:
             bad += len(frame_df)
@@ -318,7 +367,9 @@ def build_dataset_for_game_video(
 
 def make_game_splits(games: list[str], train_ratio: float, val_ratio: float, seed: int):
     if train_ratio <= 0 or val_ratio <= 0 or train_ratio + val_ratio >= 1:
-        raise ValueError("Ratios must satisfy: train>0, val>0, train+val<1. test is the remainder.")
+        raise ValueError(
+            "Ratios must satisfy: train>0, val>0, train+val<1. test is the remainder."
+        )
 
     rng = np.random.default_rng(seed)
     games = list(games)
@@ -331,8 +382,8 @@ def make_game_splits(games: list[str], train_ratio: float, val_ratio: float, see
     n_val = max(1, min(n_val, n - n_train - 1))
 
     train_games = set(games[:n_train])
-    val_games = set(games[n_train:n_train + n_val])
-    test_games = set(games[n_train + n_val:])
+    val_games = set(games[n_train : n_train + n_val])
+    test_games = set(games[n_train + n_val :])
 
     return train_games, val_games, test_games
 
@@ -340,22 +391,51 @@ def make_game_splits(games: list[str], train_ratio: float, val_ratio: float, see
 def main():
     ap = argparse.ArgumentParser()
 
-    ap.add_argument("--root", type=str, default="./output_crops", help="Root with game_* folders")
-    ap.add_argument("--out", type=str, default="./dataset_v1", help="Output dataset folder")
+    ap.add_argument(
+        "--root", type=str, default="./output_crops", help="Root with game_* folders"
+    )
+    ap.add_argument(
+        "--out", type=str, default="./dataset_v1", help="Output dataset folder"
+    )
     ap.add_argument("--min_wh", type=int, default=20, help="Minimum crop width/height")
-    ap.add_argument("--jpeg_quality", type=int, default=90, help="JPEG quality for saved crops")
-    ap.add_argument("--pad", type=int, default=0, help="Padding (pixels) around bbox before crop")
-    ap.add_argument("--make_splits", action="store_true", help="Also create manifest_with_splits.csv")
+    ap.add_argument(
+        "--jpeg_quality", type=int, default=90, help="JPEG quality for saved crops"
+    )
+    ap.add_argument(
+        "--pad", type=int, default=0, help="Padding (pixels) around bbox before crop"
+    )
+    ap.add_argument(
+        "--make_splits",
+        action="store_true",
+        help="Also create manifest_with_splits.csv",
+    )
     ap.add_argument("--train_ratio", type=float, default=0.75)
     ap.add_argument("--val_ratio", type=float, default=0.15)
     ap.add_argument("--seed", type=int, default=42)
 
-    ap.add_argument("--mode", type=str, default="images", choices=["images", "video"],
-                    help="images: crops from images/; video: crops from mp4 + players csv")
+    ap.add_argument(
+        "--mode",
+        type=str,
+        default="images",
+        choices=["images", "video"],
+        help="images: crops from images/; video: crops from mp4 + players csv",
+    )
 
-    ap.add_argument("--video", type=str, default=None, help="Explicit path to video file (optional)")
-    ap.add_argument("--players_csv", type=str, default=None, help="Explicit path to players csv (optional)")
-    ap.add_argument("--frame_stride", type=int, default=1, help="Use every N-th frame in video mode (>=1)")
+    ap.add_argument(
+        "--video", type=str, default=None, help="Explicit path to video file (optional)"
+    )
+    ap.add_argument(
+        "--players_csv",
+        type=str,
+        default=None,
+        help="Explicit path to players csv (optional)",
+    )
+    ap.add_argument(
+        "--frame_stride",
+        type=int,
+        default=1,
+        help="Use every N-th frame in video mode (>=1)",
+    )
 
     args = ap.parse_args()
 
@@ -384,18 +464,24 @@ def main():
     for g in games:
         if args.mode == "images":
             part_df, bad, csv_path = build_dataset_for_game_images(
-                g, out_crops, min_wh=args.min_wh, jpeg_quality=args.jpeg_quality, pad=args.pad
+                g,
+                out_crops,
+                min_wh=args.min_wh,
+                jpeg_quality=args.jpeg_quality,
+                pad=args.pad,
             )
             all_parts.append(part_df)
             bad_total += bad
-            sources_index.append({
-                "game": g.name,
-                "mode": "images",
-                "players_csv": csv_path,
-                "video": None,
-                "n_rows": int(part_df.shape[0]),
-                "bad_rows": int(bad),
-            })
+            sources_index.append(
+                {
+                    "game": g.name,
+                    "mode": "images",
+                    "players_csv": csv_path,
+                    "video": None,
+                    "n_rows": int(part_df.shape[0]),
+                    "bad_rows": int(bad),
+                }
+            )
 
         else:
             part_df, bad, csv_path, vpath = build_dataset_for_game_video(
@@ -410,14 +496,16 @@ def main():
             )
             all_parts.append(part_df)
             bad_total += bad
-            sources_index.append({
-                "game": g.name,
-                "mode": "video",
-                "players_csv": csv_path,
-                "video": vpath,
-                "n_rows": int(part_df.shape[0]),
-                "bad_rows": int(bad),
-            })
+            sources_index.append(
+                {
+                    "game": g.name,
+                    "mode": "video",
+                    "players_csv": csv_path,
+                    "video": vpath,
+                    "n_rows": int(part_df.shape[0]),
+                    "bad_rows": int(bad),
+                }
+            )
 
     manifest = pd.concat(all_parts, ignore_index=True) if all_parts else pd.DataFrame()
     manifest_path = out_root / "manifest.csv"
@@ -433,7 +521,9 @@ def main():
 
     if args.make_splits:
         if "game" not in manifest.columns or manifest.empty:
-            raise ValueError("Manifest is empty or has no 'game' column; cannot create splits.")
+            raise ValueError(
+                "Manifest is empty or has no 'game' column; cannot create splits."
+            )
 
         game_list = sorted(manifest["game"].unique().tolist())
         train_games, val_games, test_games = make_game_splits(
@@ -455,8 +545,10 @@ def main():
 
         print("saved:", out_path.as_posix())
         print("split counts:\n", manifest_s["split"].value_counts())
-        print("games per split:",
-              {"train": len(train_games), "val": len(val_games), "test": len(test_games)})
+        print(
+            "games per split:",
+            {"train": len(train_games), "val": len(val_games), "test": len(test_games)},
+        )
 
 
 if __name__ == "__main__":

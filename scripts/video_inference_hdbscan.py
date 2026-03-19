@@ -5,13 +5,12 @@ from collections import defaultdict
 from pathlib import Path
 
 import cv2
+import hdbscan
 import numpy as np
 import pandas as pd
 import torch
-from tqdm import tqdm
-
-import hdbscan
 from sklearn.cluster import KMeans
+from tqdm import tqdm
 
 from dataset import get_transforms
 from models import load_model
@@ -158,7 +157,9 @@ def extract_track_embeddings(
             )
 
     if not track_embs:
-        raise RuntimeError("No tracked player detections were collected from the video.")
+        raise RuntimeError(
+            "No tracked player detections were collected from the video."
+        )
 
     track_ids = sorted(track_embs.keys())
     X_tracks = []
@@ -260,7 +261,12 @@ def annotate_video(video_path: Path, frame_df: pd.DataFrame, out_video_path: Pat
             break
 
         for det in by_frame.get(frame_idx, []):
-            x1, y1, x2, y2 = int(det["x1"]), int(det["y1"]), int(det["x2"]), int(det["y2"])
+            x1, y1, x2, y2 = (
+                int(det["x1"]),
+                int(det["y1"]),
+                int(det["x2"]),
+                int(det["y2"]),
+            )
             label = str(det.get("pred_label", "unknown"))
             track_id = int(det.get("track_id", -1))
 
@@ -300,8 +306,12 @@ def parse_args():
     ap.add_argument("--video", type=str, required=True, help="Path to input video")
     ap.add_argument("--output", type=str, default="outputs/video_inference")
     ap.add_argument("--detector", type=str, default="yolov8n.pt")
-    ap.add_argument("--embed_model", type=str, default="dino", choices=["dino", "osnet"])
-    ap.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
+    ap.add_argument(
+        "--embed_model", type=str, default="dino", choices=["dino", "osnet"]
+    )
+    ap.add_argument(
+        "--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu"
+    )
     ap.add_argument("--conf", type=float, default=0.35)
     ap.add_argument("--iou", type=float, default=0.5)
     ap.add_argument("--tracker", type=str, default="bytetrack.yaml")
