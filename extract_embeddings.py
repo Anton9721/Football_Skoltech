@@ -113,3 +113,35 @@ def extract_all_models(
         torch.cuda.empty_cache()
 
     return results
+
+def extract_all_finetuned(df_match, game_id, device, finetuned_configs, batch_size=128):
+    """
+    finetuned_configs = {
+        "osnet_triplet": ("osnet", "checkpoints/osnet_triplet_best.pth"),
+        "osnet_supcon":  ("osnet", "checkpoints/osnet_supcon_best.pth"),
+        "dino_supcon":   ("dino",  "checkpoints/dino_supcon_best.pth"),
+        "dino_triplet":  ("dino",  "checkpoints/dino_triplet_best.pth"),
+    }
+    возвращает тот же формат что extract_all_models:
+    { "osnet_triplet": (X, y), ... }
+    """
+    from models import load_finetuned_model
+
+    results = {}
+
+    for name, (base_name, ckpt_path) in finetuned_configs.items():
+        print(f"\n{'='*40}")
+        print(f"  finetuned: {name}  ({ckpt_path})")
+        print(f"{'='*40}")
+
+        loader = get_loader(df_match, batch_size=batch_size, model_name=base_name)
+        model  = load_finetuned_model(base_name, ckpt_path, device)
+        X, y   = get_embeddings(f"{name}_{game_id}", model, loader)
+
+        results[name] = (X, y)
+        print(f"  готово: shape={X.shape}")
+
+        del model
+        torch.cuda.empty_cache()
+
+    return results

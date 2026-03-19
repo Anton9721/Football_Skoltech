@@ -86,3 +86,29 @@ def load_model(name, device="cuda"):
         return FeatureExtractor(model, device)
 
     raise ValueError(f"unknown model: {name}")
+
+def load_finetuned_model(base_name, ckpt_path, device="cuda"):
+    """
+    base_name : "osnet" | "dino"
+    ckpt_path : путь к .pth файлу с state_dict
+    """
+    if base_name == "osnet":
+        model = torchreid.models.build_model(
+            name="osnet_x1_0",
+            num_classes=1000,
+            pretrained=False,
+        )
+        model.classifier = torch.nn.Identity()
+        model.load_state_dict(torch.load(ckpt_path, map_location=device))
+        return FeatureExtractor(model, device)
+
+    if base_name == "dino":
+        model = timm.create_model(
+            "vit_base_patch16_224_dino",
+            pretrained=False,
+            num_classes=0,
+        )
+        model.load_state_dict(torch.load(ckpt_path, map_location=device))
+        return FeatureExtractor(model, device)
+
+    raise ValueError(f"unknown base model: {base_name}")
