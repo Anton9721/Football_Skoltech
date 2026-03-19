@@ -1,28 +1,37 @@
-# Cache
-.cache/
-cache/
-*.pdf
-*.crdownload
-*.part
+# Python
 __pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
 
-# Data
-classification_clustering_old.py
-dataset_v1/
-output_clips/
-dataset_video_v1/
-job-44209669_120_model.pth/
+# Jupyter
+.ipynb_checkpoints/
+work_file.ipynb
+
+# Data and weights
 datasets/
-articles/
+dataset_v1/
+dataset_video_v1/
+output_clips/
+output_crops/
+checkpoints/
+*.pth
+*.pt
+
+# Cache and archives
+cache/
+.cache/
 *.zip
-*.tar
-*.gz
+*.tar.gz
 *.rar
-*.7z
 
-# Temp
-temp/
-tmp/
-*.tmp
+# Media and docs
+articles/
+*.pdf
+*.mp4
+*.avi
 
-main.ipynb
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
