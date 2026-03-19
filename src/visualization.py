@@ -1,32 +1,30 @@
-import io
 import base64
+import io
 
+import ipywidgets as widgets
 import numpy as np
 import pandas as pd
-from PIL import Image
-
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
-import umap
-
-from sklearn.metrics import confusion_matrix
-
 import plotly.express as px
 import plotly.graph_objects as go
-from IPython.display import display, HTML, clear_output
-import ipywidgets as widgets
-from metrics import align_clusters
+import umap
+from IPython.display import HTML, clear_output, display
+from PIL import Image
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from sklearn.metrics import confusion_matrix
 
+from metrics import align_clusters
 
 LABELS = ["team_left", "team_right", "goalkeeper"]
 LABEL_COLORS = {
-    "team_left":  "#3b82f6",
+    "team_left": "#3b82f6",
     "team_right": "#ef4444",
     "goalkeeper": "#22c55e",
 }
 
 
 # ─── utils ────────────────────────────────────────────────────────────────────
+
 
 def _to_base64(path: str, max_side: int = 256) -> str:
     img = Image.open(path).convert("RGB")
@@ -56,24 +54,33 @@ def _sample(X, y, df, n, seed):
     return X[idx], y[idx], df.iloc[idx].reset_index(drop=True)
 
 
-def reduce_embeddings(X: np.ndarray, method: str = "umap", seed: int = 42) -> np.ndarray:
+def reduce_embeddings(
+    X: np.ndarray, method: str = "umap", seed: int = 42
+) -> np.ndarray:
     X = np.asarray(X, dtype=np.float32)
     if method == "pca":
         return PCA(n_components=2, random_state=seed).fit_transform(X)
     if method == "tsne":
         return TSNE(
-            n_components=2, perplexity=30,
-            learning_rate="auto", init="pca", random_state=seed,
+            n_components=2,
+            perplexity=30,
+            learning_rate="auto",
+            init="pca",
+            random_state=seed,
         ).fit_transform(X)
     if method == "umap":
         return umap.UMAP(
-            n_components=2, n_neighbors=30,
-            min_dist=0.1, metric="cosine", random_state=seed,
+            n_components=2,
+            n_neighbors=30,
+            min_dist=0.1,
+            metric="cosine",
+            random_state=seed,
         ).fit_transform(X)
     raise ValueError(f"Unknown method: {method}")
 
 
 # ─── embedding scatter ────────────────────────────────────────────────────────
+
 
 def interactive_embedding_view(
     X,
@@ -109,7 +116,9 @@ def interactive_embedding_view(
     Z = reduce_embeddings(Xs, method=method, seed=seed)
     print("Готово.")
 
-    meta_cols = [c for c in ["game", "frame_idx", "player_id", "split"] if c in dfs.columns]
+    meta_cols = [
+        c for c in ["game", "frame_idx", "player_id", "split"] if c in dfs.columns
+    ]
 
     if preload_images:
         print("Кодирование изображений...")
@@ -123,18 +132,20 @@ def interactive_embedding_view(
     else:
         b64_list = [""] * len(dfs)
 
-    df_plot = pd.DataFrame({
-        "x":         Z[:, 0],
-        "y":         Z[:, 1],
-        "label":     labels_str,
-        "crop_path": dfs["crop_path"].values,
-        "b64":       b64_list,
-        **{c: dfs[c].astype(str).values for c in meta_cols},
-    })
+    df_plot = pd.DataFrame(
+        {
+            "x": Z[:, 0],
+            "y": Z[:, 1],
+            "label": labels_str,
+            "crop_path": dfs["crop_path"].values,
+            "b64": b64_list,
+            **{c: dfs[c].astype(str).values for c in meta_cols},
+        }
+    )
 
     # customdata порядок: [label, meta..., b64]
     custom_cols = ["label"] + meta_cols + ["b64"]
-    customdata  = df_plot[custom_cols].values
+    customdata = df_plot[custom_cols].values
 
     b64_idx = len(meta_cols) + 1
 
@@ -155,19 +166,22 @@ def interactive_embedding_view(
         if not mask.any():
             continue
         sub = df_plot[mask]
-        fig.add_trace(go.Scatter(
-            x=sub["x"], y=sub["y"],
-            mode="markers",
-            name=lbl,
-            marker=dict(
-                size=point_size,
-                color=LABEL_COLORS.get(lbl, "#888"),
-                opacity=0.75,
-                line=dict(width=0),
-            ),
-            customdata=customdata[mask.values],
-            hovertemplate=hover_template,
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=sub["x"],
+                y=sub["y"],
+                mode="markers",
+                name=lbl,
+                marker=dict(
+                    size=point_size,
+                    color=LABEL_COLORS.get(lbl, "#888"),
+                    opacity=0.75,
+                    line=dict(width=0),
+                ),
+                customdata=customdata[mask.values],
+                hovertemplate=hover_template,
+            )
+        )
 
     fig.update_layout(
         title=f"{method.upper()} — {len(df_plot)} точек",
@@ -183,7 +197,7 @@ def interactive_embedding_view(
     figw = go.FigureWidget(fig)
 
     # ── панель клика ──────────────────────────────────────────────────────────
-    img_out  = widgets.Output(layout=widgets.Layout(width="250px"))
+    img_out = widgets.Output(layout=widgets.Layout(width="250px"))
     meta_out = widgets.Output(layout=widgets.Layout(width="250px"))
 
     panel = widgets.VBox(
@@ -206,8 +220,8 @@ def interactive_embedding_view(
     def on_click(trace, points, _state):
         if not points.point_inds:
             return
-        i   = points.point_inds[0]
-        cd  = trace.customdata[i]
+        i = points.point_inds[0]
+        cd = trace.customdata[i]
         lbl = cd[0]
         meta_vals = {meta_cols[j]: cd[j + 1] for j in range(len(meta_cols))}
         crop_path = df_plot.loc[
@@ -222,12 +236,14 @@ def interactive_embedding_view(
                 try:
                     b64 = _to_base64(crop_path, max_side=230)
                     color = LABEL_COLORS.get(lbl, "#888")
-                    display(HTML(
-                        f'<div style="border:3px solid {color};'
-                        f'border-radius:6px;display:inline-block">'
-                        f'<img src="data:image/jpeg;base64,{b64}"'
-                        f' style="display:block;max-width:230px"></div>'
-                    ))
+                    display(
+                        HTML(
+                            f'<div style="border:3px solid {color};'
+                            f'border-radius:6px;display:inline-block">'
+                            f'<img src="data:image/jpeg;base64,{b64}"'
+                            f' style="display:block;max-width:230px"></div>'
+                        )
+                    )
                 except Exception as e:
                     display(HTML(f'<span style="color:#ef4444">Ошибка: {e}</span>'))
 
@@ -241,25 +257,30 @@ def interactive_embedding_view(
                 f"</tr>"
                 for k, v in meta_vals.items()
             )
-            display(HTML(
-                f"<div style='margin-top:8px'>"
-                f"<span style='background:{color};color:white;padding:2px 10px;"
-                f"border-radius:12px;font-size:12px'>{lbl}</span>"
-                f"<table style='margin-top:6px;border-collapse:collapse'>{rows}</table>"
-                f"</div>"
-            ))
+            display(
+                HTML(
+                    f"<div style='margin-top:8px'>"
+                    f"<span style='background:{color};color:white;padding:2px 10px;"
+                    f"border-radius:12px;font-size:12px'>{lbl}</span>"
+                    f"<table style='margin-top:6px;border-collapse:collapse'>{rows}</table>"
+                    f"</div>"
+                )
+            )
 
     for trace in figw.data:
         trace.on_click(on_click)
 
-    display(widgets.HBox(
-        [figw, panel],
-        layout=widgets.Layout(align_items="flex-start"),
-    ))
+    display(
+        widgets.HBox(
+            [figw, panel],
+            layout=widgets.Layout(align_items="flex-start"),
+        )
+    )
     return figw
 
 
 # ─── confusion matrix ─────────────────────────────────────────────────────────
+
 
 def plot_confusion_matrix(y_true, y_pred, normalize: bool = False):
     """
@@ -278,11 +299,11 @@ def plot_confusion_matrix(y_true, y_pred, normalize: bool = False):
 
     if normalize:
         row_sums = cm.sum(axis=1, keepdims=True)
-        cm_show  = np.where(row_sums > 0, cm / row_sums, 0).round(3)
-        title    = "Confusion Matrix (normalized)"
+        cm_show = np.where(row_sums > 0, cm / row_sums, 0).round(3)
+        title = "Confusion Matrix (normalized)"
     else:
         cm_show = cm
-        title   = "Confusion Matrix"
+        title = "Confusion Matrix"
 
     df_cm = pd.DataFrame(cm_show, index=present, columns=present)
 
@@ -323,7 +344,9 @@ def plot_confusion_matrix_clustering(y_true, clusters, normalize: bool = False):
     mask = clusters != -1
 
     if mask.sum() == 0:
-        raise ValueError("Все объекты помечены как noise (-1), confusion matrix построить нельзя.")
+        raise ValueError(
+            "Все объекты помечены как noise (-1), confusion matrix построить нельзя."
+        )
 
     y_true_clean = y_true[mask]
     clusters_clean = clusters[mask]

@@ -1,9 +1,8 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-import matplotlib.pyplot as plt
-
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, silhouette_score
 from scipy.optimize import linear_sum_assignment
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, silhouette_score
 
 
 def crop_accuracy(y_true, y_pred):
@@ -12,7 +11,6 @@ def crop_accuracy(y_true, y_pred):
 
 def crop_macro_f1(y_true, y_pred):
     return f1_score(y_true, y_pred, average="macro")
-
 
 
 def clustering_accuracy(y_true, y_pred):
@@ -27,6 +25,7 @@ def clustering_accuracy(y_true, y_pred):
 
     row, col = linear_sum_assignment(w.max() - w)
     return w[row, col].sum() / len(y_pred)
+
 
 def align_clusters(y_true, clusters):
     y_true = np.asarray(y_true)
@@ -64,18 +63,19 @@ def macro_f1_clustering(y_true, clusters):
     clusters_aligned, _ = align_clusters(y_true[mask], clusters[mask])
     return f1_score(y_true[mask], clusters_aligned, average="macro")
 
+
 # если нет меток
 def assign_labels_by_size(clusters):
     unique, counts = np.unique(clusters[clusters != -1], return_counts=True)
-    sorted_by_size = unique[np.argsort(-counts)] 
-    
+    sorted_by_size = unique[np.argsort(-counts)]
+
     mapping = {}
     mapping[sorted_by_size[0]] = "team_left"
     mapping[sorted_by_size[1]] = "team_right"
-    
+
     for c in sorted_by_size[2:]:
         mapping[c] = "goalkeeper"
-    
+
     return np.array([mapping.get(c, "noise") for c in clusters])
 
 
@@ -93,4 +93,3 @@ def get_confusion_matrix(y_true, y_pred, is_clustering=False):
 
     cm = confusion_matrix(y_true, y_pred)
     return cm, mapping
-

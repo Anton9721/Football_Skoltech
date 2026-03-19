@@ -15,25 +15,29 @@ MatrixVisualizer — интерактивный heatmap для произвол�
 import threading
 import webbrowser
 
+import hdbscan
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import QuantileTransformer as _SKLearnQT
-
-import hdbscan
-
-from bokeh.plotting import figure
-from bokeh.models import (
-    ColumnDataSource, ColorBar, LinearColorMapper,
-    Select, TextAreaInput, Button, Div, CustomJS,
-)
-from bokeh.layouts import column, row
-from bokeh.palettes import RdBu11
-from bokeh.colors import RGB
-from bokeh.server.server import BaseServer
-from bokeh.server.util import bind_sockets
-from bokeh.server.tornado import BokehTornado
 from bokeh.application import Application
 from bokeh.application.handlers.function import FunctionHandler
+from bokeh.colors import RGB
+from bokeh.layouts import column, row
+from bokeh.models import (
+    Button,
+    ColorBar,
+    ColumnDataSource,
+    CustomJS,
+    Div,
+    LinearColorMapper,
+    Select,
+    TextAreaInput,
+)
+from bokeh.palettes import RdBu11
+from bokeh.plotting import figure
+from bokeh.server.server import BaseServer
+from bokeh.server.tornado import BokehTornado
+from bokeh.server.util import bind_sockets
+from sklearn.preprocessing import QuantileTransformer as _SKLearnQT
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
@@ -48,7 +52,7 @@ def quantile_transform_1d(arr: np.ndarray, n_quantiles: int = None) -> np.ndarra
     return qt.fit_transform(arr.reshape(-1, 1)).ravel()
 
 
-COLOR_PURE_ONE  = "#ffff00"
+COLOR_PURE_ONE = "#ffff00"
 COLOR_PURE_ZERO = "#cc66ff"
 
 
@@ -64,37 +68,50 @@ class MatrixVisualizer:
     pure_zero   : float | None  — raw-значение, которое красить сиреневым (default 0.0)
     """
 
-    def __init__(self, matrix, y_labels=None, x_labels=None,
-                 title: str = "Matrix Visualizer",
-                 pure_one: float = 1.0,
-                 pure_zero: float = 0.0):
+    def __init__(
+        self,
+        matrix,
+        y_labels=None,
+        x_labels=None,
+        title: str = "Matrix Visualizer",
+        pure_one: float = 1.0,
+        pure_zero: float = 0.0,
+    ):
         if isinstance(matrix, pd.DataFrame):
-            self.matrix   = matrix.values.astype(float)
-            self.y_labels = list(matrix.index)   if y_labels is None else list(y_labels)
+            self.matrix = matrix.values.astype(float)
+            self.y_labels = list(matrix.index) if y_labels is None else list(y_labels)
             self.x_labels = list(matrix.columns) if x_labels is None else list(x_labels)
         else:
             self.matrix = np.array(matrix, dtype=float)
             N, K = self.matrix.shape
-            self.y_labels = [f"feature_{i}" for i in range(N)] if y_labels is None else list(y_labels)
-            self.x_labels = [f"col_{j}"     for j in range(K)] if x_labels is None else list(x_labels)
+            self.y_labels = (
+                [f"feature_{i}" for i in range(N)]
+                if y_labels is None
+                else list(y_labels)
+            )
+            self.x_labels = (
+                [f"col_{j}" for j in range(K)] if x_labels is None else list(x_labels)
+            )
 
-        self.title      = title
-        self.pure_one   = pure_one
-        self.pure_zero  = pure_zero
-        self._ioloop    = None
+        self.title = title
+        self.pure_one = pure_one
+        self.pure_zero = pure_zero
+        self._ioloop = None
         self._hdbscan_sort()
 
     def _hdbscan_sort(self):
         N = self.matrix.shape[0]
         if N < 5:
             return
-        embeddings = np.vstack([quantile_transform_1d(self.matrix[i]) for i in range(N)])
+        embeddings = np.vstack(
+            [quantile_transform_1d(self.matrix[i]) for i in range(N)]
+        )
         try:
-            min_cls  = max(2, N // 15)
-            labels   = hdbscan.HDBSCAN(min_cluster_size=min_cls).fit_predict(embeddings)
+            min_cls = max(2, N // 15)
+            labels = hdbscan.HDBSCAN(min_cluster_size=min_cls).fit_predict(embeddings)
             sort_key = np.where(labels == -1, int(labels.max()) + 1, labels)
-            order    = np.argsort(sort_key, kind="stable")
-            self.matrix   = self.matrix[order]
+            order = np.argsort(sort_key, kind="stable")
+            self.matrix = self.matrix[order]
             self.y_labels = [self.y_labels[i] for i in order]
         except Exception as exc:
             print(f"[MatrixVisualizer] HDBSCAN пропущен: {exc}")
@@ -117,8 +134,8 @@ class MatrixVisualizer:
 
         sockets, actual_port = bind_sockets("localhost", port)
 
-        app         = Application(FunctionHandler(self._build_app))
-        io_loop     = IOLoop()
+        app = Application(FunctionHandler(self._build_app))
+        io_loop = IOLoop()
         tornado_app = BokehTornado({"/": app}, extra_websocket_origins=["*"])
 
         http_server = HTTPServer(tornado_app)
@@ -148,25 +165,24 @@ class MatrixVisualizer:
     def interpolate_palette(self, palette, n=256):
         def hex_to_rgb(h):
             h = h.lstrip('#')
-            return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
-        
+            return tuple(int(h[i : i + 2], 16) for i in (0, 2, 4))
+
         colors = [hex_to_rgb(c) for c in palette]
         xs = np.linspace(0, 1, len(colors))
         xi = np.linspace(0, 1, n)
         result = []
         for channel in range(3):
             result.append(np.interp(xi, xs, [c[channel] for c in colors]))
-        return [f"#{int(r):02x}{int(g):02x}{int(b):02x}" 
-                for r, g, b in zip(*result)]
+        return [f"#{int(r):02x}{int(g):02x}{int(b):02x}" for r, g, b in zip(*result)]
 
     def _build_app(self, doc):
         N, K = self.matrix.shape
 
         palette = self.interpolate_palette(list(reversed(RdBu11)), n=256)
-        mapper  = LinearColorMapper(palette=palette, low=0.0, high=1.0)
+        mapper = LinearColorMapper(palette=palette, low=0.0, high=1.0)
 
-        mask_one  = (self.matrix == self.pure_one)
-        mask_zero = (self.matrix == self.pure_zero)
+        mask_one = self.matrix == self.pure_one
+        mask_zero = self.matrix == self.pure_zero
 
         def make_data(cm):
             xs, ys, cvs, rvs, feats, cols, clrs = [], [], [], [], [], [], []
@@ -184,8 +200,15 @@ class MatrixVisualizer:
                         clrs.append(COLOR_PURE_ZERO)
                     else:
                         clrs.append(None)
-            return dict(x=xs, y=ys, color_val=cvs, raw_val=rvs,
-                        feature=feats, col_name=cols, special_color=clrs)
+            return dict(
+                x=xs,
+                y=ys,
+                color_val=cvs,
+                raw_val=rvs,
+                feature=feats,
+                col_name=cols,
+                special_color=clrs,
+            )
 
         source = ColumnDataSource(make_data(self._color_matrix("rows")))
 
@@ -193,15 +216,21 @@ class MatrixVisualizer:
         plot_h = max(300, min(850, N * 13))
 
         p = figure(
-            width=plot_w, height=plot_h, title=self.title,
+            width=plot_w,
+            height=plot_h,
+            title=self.title,
             tools="tap,box_select,box_zoom,wheel_zoom,pan,reset",
-            active_drag="box_zoom", active_scroll="wheel_zoom",
-            x_range=(-0.5, K - 0.5), y_range=(-0.5, N - 0.5),
+            active_drag="box_zoom",
+            active_scroll="wheel_zoom",
+            x_range=(-0.5, K - 0.5),
+            y_range=(-0.5, N - 0.5),
         )
 
-
         p.rect(
-            x="x", y="y", width=1.0, height=1.0,
+            x="x",
+            y="y",
+            width=1.0,
+            height=1.0,
             source=source,
             fill_color={"field": "color_val", "transform": mapper},
             line_color=None,
@@ -216,17 +245,25 @@ class MatrixVisualizer:
                     if mask_one[i, j] or mask_zero[i, j]:
                         xs.append(j)
                         ys.append(i)
-                        clrs.append(COLOR_PURE_ONE if mask_one[i, j] else COLOR_PURE_ZERO)
+                        clrs.append(
+                            COLOR_PURE_ONE if mask_one[i, j] else COLOR_PURE_ZERO
+                        )
                         rvs.append(float(self.matrix[i, j]))
                         feats.append(self.y_labels[i])
                         col_names.append(self.x_labels[j])
-            return dict(x=xs, y=ys, color=clrs, raw_val=rvs,
-                        feature=feats, col_name=col_names)
+            return dict(
+                x=xs, y=ys, color=clrs, raw_val=rvs, feature=feats, col_name=col_names
+            )
 
-        special_source = ColumnDataSource(make_special_source(self._color_matrix("rows")))
+        special_source = ColumnDataSource(
+            make_special_source(self._color_matrix("rows"))
+        )
 
         p.rect(
-            x="x", y="y", width=1.0, height=1.0,
+            x="x",
+            y="y",
+            width=1.0,
+            height=1.0,
             source=special_source,
             fill_color="color",
             line_color=None,
@@ -243,10 +280,12 @@ class MatrixVisualizer:
         fs = "7pt" if N > 50 else ("8pt" if N > 25 else "10pt")
         p.yaxis.major_label_text_font_size = fs
 
-        p.add_layout(ColorBar(color_mapper=mapper, width=15,
-                               location=(0, 0), title=""), "right")
+        p.add_layout(
+            ColorBar(color_mapper=mapper, width=15, location=(0, 0), title=""), "right"
+        )
 
-        legend_html = Div(text=f"""
+        legend_html = Div(
+            text=f"""
             <div style="display:flex; flex-direction:column;
                         justify-content:space-between;
                         height:{max(200, min(700, plot_h - 80))}px;
@@ -264,27 +303,37 @@ class MatrixVisualizer:
                     Чистый 0
                 </div>
             </div>
-        """, width=100)
+        """,
+            width=100,
+        )
 
         axis_select = Select(
-            title="Нормализация цвета:", value="rows",
-            options=[("rows",    "По строкам (по умолчанию)"),
-                     ("columns", "По столбцам"),
-                     ("global",  "Глобальная")],
+            title="Нормализация цвета:",
+            value="rows",
+            options=[
+                ("rows", "По строкам (по умолчанию)"),
+                ("columns", "По столбцам"),
+                ("global", "Глобальная"),
+            ],
             width=260,
         )
         selected_label = Div(text="<b>Выбранные признаки:</b>")
         text_area = TextAreaInput(value="", rows=4, width=plot_w - 180)
-        copy_btn  = Button(label="Копировать", button_type="success", width=160)
+        copy_btn = Button(label="Копировать", button_type="success", width=160)
 
-        copy_btn.js_on_click(CustomJS(args=dict(ta=text_area), code="""
+        copy_btn.js_on_click(
+            CustomJS(
+                args=dict(ta=text_area),
+                code="""
             navigator.clipboard.writeText(ta.value).catch(() => {
                 const el = document.createElement('textarea');
                 el.value = ta.value; document.body.appendChild(el);
                 el.select(); document.execCommand('copy');
                 document.body.removeChild(el);
             });
-        """))
+        """,
+            )
+        )
 
         def on_axis_change(attr, old, new):
             cm_new = self._color_matrix(new)
@@ -305,11 +354,14 @@ class MatrixVisualizer:
 
         source.selected.on_change("indices", on_selection)
 
-        doc.add_root(column(
-            row(p, column(legend_html, axis_select)),
-            column(selected_label, row(text_area, copy_btn)),
-        ))
+        doc.add_root(
+            column(
+                row(p, column(legend_html, axis_select)),
+                column(selected_label, row(text_area, copy_btn)),
+            )
+        )
         doc.title = self.title
+
 
 # viz = MatrixVisualizer(mat, y_labels=y_labels, x_labels=x_labels, title="Demo MatrixVisualizer")
 # viz.show()
