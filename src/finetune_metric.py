@@ -5,7 +5,6 @@ finetune_metric.py
 """
 
 import os
-import types
 from collections import defaultdict
 
 import numpy as np

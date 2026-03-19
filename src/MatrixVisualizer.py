@@ -20,7 +20,6 @@ import numpy as np
 import pandas as pd
 from bokeh.application import Application
 from bokeh.application.handlers.function import FunctionHandler
-from bokeh.colors import RGB
 from bokeh.layouts import column, row
 from bokeh.models import (
     Button,
