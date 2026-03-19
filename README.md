@@ -91,17 +91,52 @@ pip install git+https://github.com/openai/clip.git
 
 ## Quick start
 
-**1. Build dataset manifest**
-```bash
-python scripts/make_dataset.py
+**1. Prepare raw data**
+
+Before running `make_dataset.py`, ensure your raw data follows this structure:
+
+```
+output_crops/
+└── game_1_H1/
+    ├── images/                 # video frames as .jpg/.png
+    │   ├── frame_004077.jpg
+    │   └── ...
+    └── markup/
+        └── players.csv         # per-frame player annotations
 ```
 
-**2. Run benchmark (all models)**
+Required columns in `players.csv`:
+
+| Column | Description |
+|---|---|
+| `x1, y1, x2, y2` | Bounding box coordinates |
+| `role_name` | Player role (e.g. `Goalkeeper`, `Left Midfielder`) |
+| `left2right` | Team side: `1` = team_left, `0` = team_right |
+| `image_file` | Frame filename (e.g. `frame_004077.jpg`) |
+| `frame_idx` | Frame number (optional) |
+| `player_id` | Player track ID (optional) |
+
+**2. Build dataset manifest**
+
+```bash
+python scripts/make_dataset.py --root output_crops --out dataset_v1 --mode images
+```
+
+Output:
+```
+dataset_v1/
+├── crops/                      # cropped player images (.jpg)
+├── manifest.csv                # crop_path, label, game, frame_idx, player_id
+└── sources_index.csv           # per-game stats
+```
+
+**3. Run benchmark (all models)**
+
 ```bash
 python scripts/run_benchmark.py
 ```
 
-**3. Fine-tune with metric learning**
+**4. Fine-tune with metric learning**
 
 See `notebooks/2.0-benchmark.ipynb` — call `finetune(args)` with your config.
 
