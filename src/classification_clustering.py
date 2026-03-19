@@ -142,7 +142,12 @@ def run_clustering(
             results["macro_f1_cluster"] = np.nan
 
     elif method == "gmm":
-        clusterer = GaussianMixture(n_components=n_classes, random_state=seed)
+        clusterer = GaussianMixture(
+            n_components=n_classes,
+            covariance_type="full",
+            reg_covar=1e-4,
+            random_state=seed,
+        )
         clusters = clusterer.fit_predict(X_proc)
         results = {
             "clustering_accuracy": clustering_accuracy(y, clusters),
@@ -150,6 +155,7 @@ def run_clustering(
             "n_clusters": int(len(np.unique(clusters))),
             "noise_fraction": 0.0,
         }
+
 
     else:
         raise ValueError(f"not implemented method {method}")
