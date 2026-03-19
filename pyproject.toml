@@ -1,0 +1,14 @@
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+
+[tool.flake8]
+max-line-length = 88
+ignore = ["E203", "W503"]
+exclude = [".git", "__pycache__", "build", "dist"]
