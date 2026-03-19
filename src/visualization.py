@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.metrics import confusion_matrix
 
-from metrics import align_clusters
+from src.metrics import align_clusters
 
 LABELS = ["team_left", "team_right", "goalkeeper"]
 LABEL_COLORS = {

@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from IPython.display import display
 
-from classification_clustering import run_clustering
-from extract_embeddings import extract_all_finetuned, extract_all_models
+from src.classification_clustering import run_clustering
+from src.extract_embeddings import extract_all_finetuned, extract_all_models
 
 
 def flip_lr_label(label: str) -> str:

@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 
-from metrics import (
+from src.metrics import (
     clustering_accuracy,
     crop_accuracy,
     crop_macro_f1,

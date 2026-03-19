@@ -12,8 +12,8 @@ import torch
 from sklearn.cluster import KMeans
 from tqdm import tqdm
 
-from dataset import get_transforms
-from models import load_model
+from src.dataset import get_transforms
+from src.models import load_model
 
 try:
     from ultralytics import YOLO

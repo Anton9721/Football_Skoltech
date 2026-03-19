@@ -6,8 +6,8 @@ import pandas as pd
 import torch
 from tqdm import tqdm
 
-from dataset import get_loader
-from models import load_model
+from src.dataset import get_loader
+from src.models import load_model
 
 
 def extract_embeddings(model, loader):

@@ -7,9 +7,9 @@ from pathlib import Path
 import pandas as pd
 import torch
 
-from classification_clustering import evaluate_single_method
-from dataset import load_manifest
-from extract_embeddings import extract_all_models
+from src.classification_clustering import evaluate_single_method
+from src.dataset import load_manifest
+from src.extract_embeddings import extract_all_models
 
 CLASS_METHODS = ("log_reg", "mlp")
 CLUSTER_METHODS = ("kmeans", "hdbscan", "gmm")
