@@ -7,7 +7,8 @@ import torch
 from tqdm import tqdm
 
 from src.dataset import get_loader
-from src.models import load_model
+from src.models import load_model, load_finetuned_model
+
 
 
 def extract_embeddings(model, loader):
@@ -129,7 +130,6 @@ def extract_all_finetuned(df_match, game_id, device, finetuned_configs, batch_si
     возвращает тот же формат что extract_all_models:
     { "osnet_triplet": (X, y), ... }
     """
-    from models import load_finetuned_model
 
     results = {}
 
