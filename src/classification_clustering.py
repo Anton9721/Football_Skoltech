@@ -1,6 +1,7 @@
+import hdbscan
 import numpy as np
 import pandas as pd
-
+import umap
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
@@ -8,9 +9,6 @@ from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
-
-import hdbscan
-import umap
 
 from metrics import (
     clustering_accuracy,
@@ -133,8 +131,12 @@ def run_clustering(
             y_clean = np.asarray(y)[mask]
             clusters_clean = clusters[mask]
             coverage = 1.0 - results["noise_fraction"]
-            results["clustering_accuracy"] = clustering_accuracy(y_clean, clusters_clean) * coverage
-            results["macro_f1_cluster"] = macro_f1_clustering(y_clean, clusters_clean) * coverage
+            results["clustering_accuracy"] = (
+                clustering_accuracy(y_clean, clusters_clean) * coverage
+            )
+            results["macro_f1_cluster"] = (
+                macro_f1_clustering(y_clean, clusters_clean) * coverage
+            )
         else:
             results["clustering_accuracy"] = np.nan
             results["macro_f1_cluster"] = np.nan
@@ -198,33 +200,64 @@ def compare_models(models: dict, test_size=0.2, seed=42):
 
     for name, (X, y) in models.items():
         print(f"evaluating {name} for classification (log_reg, mlp)...")
-        log_reg = evaluate_model_classification(name, X, y, method="log_reg", test_size=test_size, seed=seed)
-        mlp = evaluate_model_classification(name, X, y, method="mlp", test_size=test_size, seed=seed)
-        rows_class.append({
-            "model": name,
-            "log_reg_accuracy": log_reg["accuracy"],
-            "log_reg_macro_f1": log_reg["macro_f1"],
-            "mlp_accuracy": mlp["accuracy"],
-            "mlp_macro_f1": mlp["macro_f1"],
-            "macro_f1_delta_mlp_minus_log_reg": mlp["macro_f1"] - log_reg["macro_f1"],
-        })
+        log_reg = evaluate_model_classification(
+            name, X, y, method="log_reg", test_size=test_size, seed=seed
+        )
+        mlp = evaluate_model_classification(
+            name, X, y, method="mlp", test_size=test_size, seed=seed
+        )
+        rows_class.append(
+            {
+                "model": name,
+                "log_reg_accuracy": log_reg["accuracy"],
+                "log_reg_macro_f1": log_reg["macro_f1"],
+                "mlp_accuracy": mlp["accuracy"],
+                "mlp_macro_f1": mlp["macro_f1"],
+                "macro_f1_delta_mlp_minus_log_reg": mlp["macro_f1"]
+                - log_reg["macro_f1"],
+            }
+        )
 
     for name, (X, y) in models.items():
         print(f"evaluating {name} for kmeans...")
-        rows_kmeans.append(evaluate_model_clustering(name, X, y, method="kmeans", seed=seed))
+        rows_kmeans.append(
+            evaluate_model_clustering(name, X, y, method="kmeans", seed=seed)
+        )
 
     for name, (X, y) in models.items():
         print(f"evaluating {name} for hdbscan...")
-        rows_hdbscan.append(evaluate_model_clustering(name, X, y, method="hdbscan", seed=seed))
+        rows_hdbscan.append(
+            evaluate_model_clustering(name, X, y, method="hdbscan", seed=seed)
+        )
 
     for name, (X, y) in models.items():
         print(f"evaluating {name} for gmm...")
         rows_gmm.append(evaluate_model_clustering(name, X, y, method="gmm", seed=seed))
 
-    df_class = pd.DataFrame(rows_class).set_index("model").round(4).sort_values("mlp_macro_f1", ascending=False)
-    df_kmeans = pd.DataFrame(rows_kmeans).set_index("model").round(4).sort_values("macro_f1", ascending=False)
-    df_hdbscan = pd.DataFrame(rows_hdbscan).set_index("model").round(4).sort_values("macro_f1", ascending=False)
-    df_gmm = pd.DataFrame(rows_gmm).set_index("model").round(4).sort_values("macro_f1", ascending=False)
+    df_class = (
+        pd.DataFrame(rows_class)
+        .set_index("model")
+        .round(4)
+        .sort_values("mlp_macro_f1", ascending=False)
+    )
+    df_kmeans = (
+        pd.DataFrame(rows_kmeans)
+        .set_index("model")
+        .round(4)
+        .sort_values("macro_f1", ascending=False)
+    )
+    df_hdbscan = (
+        pd.DataFrame(rows_hdbscan)
+        .set_index("model")
+        .round(4)
+        .sort_values("macro_f1", ascending=False)
+    )
+    df_gmm = (
+        pd.DataFrame(rows_gmm)
+        .set_index("model")
+        .round(4)
+        .sort_values("macro_f1", ascending=False)
+    )
 
     return df_class, df_kmeans, df_hdbscan, df_gmm
 

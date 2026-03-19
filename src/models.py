@@ -1,10 +1,8 @@
+import clip
+import numpy as np
+import timm
 import torch
 import torchreid
-import timm
-import clip
-
-import numpy as np
-
 
 
 class FeatureExtractor:
@@ -21,6 +19,7 @@ class FeatureExtractor:
         with torch.cuda.amp.autocast(enabled=self.device == "cuda"):
             emb = self.model(images)
         return emb
+
 
 class CLIPExtractor:
 
@@ -43,17 +42,13 @@ def load_model(name, device="cuda"):
 
     if name == "osnet":
         model = torchreid.models.build_model(
-            name="osnet_x1_0",
-            num_classes=1000,
-            pretrained=True
+            name="osnet_x1_0", num_classes=1000, pretrained=True
         )
         return FeatureExtractor(model, device)
 
     if name == "dino":
         model = timm.create_model(
-            "vit_base_patch16_224_dino",
-            pretrained=True,
-            num_classes=0
+            "vit_base_patch16_224_dino", pretrained=True, num_classes=0
         )
         return FeatureExtractor(model, device)
 
@@ -65,8 +60,8 @@ def load_model(name, device="cuda"):
             global_pool="avg",
         )
         return FeatureExtractor(model, device)
-    
-# pip install git+https://github.com/openai/clip.git
+
+    # pip install git+https://github.com/openai/clip.git
     if name == "clip":
         model, _ = clip.load("ViT-B/32", device=device)
         return CLIPExtractor(model, device)
@@ -74,7 +69,7 @@ def load_model(name, device="cuda"):
     if name == "clip_vitl":
         model, _ = clip.load("ViT-L/14", device=device)
         return CLIPExtractor(model, device)
-    
+
     if name == "dinov2":
         model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14")
         model.eval()
@@ -86,6 +81,7 @@ def load_model(name, device="cuda"):
         return FeatureExtractor(model, device)
 
     raise ValueError(f"unknown model: {name}")
+
 
 def load_finetuned_model(base_name, ckpt_path, device="cuda"):
     """
