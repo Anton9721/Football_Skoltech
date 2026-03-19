@@ -1,6 +1,4 @@
-import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, silhouette_score
 

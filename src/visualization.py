@@ -41,7 +41,7 @@ def _to_str_labels(y) -> list[str]:
     y = np.asarray(y)
     if np.issubdtype(y.dtype, np.integer):
         return [LABELS[i] if 0 <= i < len(LABELS) else str(i) for i in y]
-    return [str(l) for l in y]
+    return [str(label) for label in y]
 
 
 def _sample(X, y, df, n, seed):
@@ -223,7 +223,7 @@ def interactive_embedding_view(
         i = points.point_inds[0]
         cd = trace.customdata[i]
         lbl = cd[0]
-        meta_vals = {meta_cols[j]: cd[j + 1] for j in range(len(meta_cols))}
+        # meta_vals = {meta_cols[j]: cd[j + 1] for j in range(len(meta_cols))}
         crop_path = df_plot.loc[
             (df_plot["x"] == trace.x[i]) & (df_plot["y"] == trace.y[i]),
             "crop_path",
@@ -250,22 +250,23 @@ def interactive_embedding_view(
         with meta_out:
             clear_output(wait=True)
             color = LABEL_COLORS.get(lbl, "#888")
-            rows = "".join(
-                f"<tr>"
-                f"<td style='color:#64748b;padding:2px 6px;font-size:11px'>{k}</td>"
-                f"<td style='padding:2px 6px;font-size:11px'>{v}</td>"
-                f"</tr>"
-                for k, v in meta_vals.items()
-            )
-            display(
-                HTML(
-                    f"<div style='margin-top:8px'>"
-                    f"<span style='background:{color};color:white;padding:2px 10px;"
-                    f"border-radius:12px;font-size:12px'>{lbl}</span>"
-                    f"<table style='margin-top:6px;border-collapse:collapse'>{rows}</table>"
-                    f"</div>"
-                )
-            )
+            # rows = "".join(
+            #     f"<tr>"
+            #     f"<td style='color:#64748b;padding:2px 6px;font-size:11px'>{k}</td>"
+            #     f"<td style='padding:2px 6px;font-size:11px'>{v}</td>"
+            #     f"</tr>"
+            #     for k, v in meta_vals.items()
+            # )
+            # display(
+            #     HTML(
+            #         f"<div style='margin-top:8px'>"
+            #         f"<span style='background:{color};color:white;padding:2px 10px;"
+            #         f"border-radius:12px;font-size:12px'>{lbl}</span>"
+            #         f"<table style='margin-top:6px;border-collapse:collapse'>"
+            #         "{rows}</table>"
+            #         f"</div>"
+            #     )
+            # )
 
     for trace in figw.data:
         trace.on_click(on_click)
@@ -294,7 +295,7 @@ def plot_confusion_matrix(y_true, y_pred, normalize: bool = False):
     yt = _to_str_labels(y_true)
     yp = _to_str_labels(y_pred)
 
-    present = [l for l in LABELS if l in set(yt) | set(yp)]
+    present = [label for label in LABELS if label in set(yt) | set(yp)]
     cm = confusion_matrix(yt, yp, labels=present)
 
     if normalize:
@@ -356,7 +357,7 @@ def plot_confusion_matrix_clustering(y_true, clusters, normalize: bool = False):
     yt = _to_str_labels(y_true_clean)
     yp = _to_str_labels(clusters_aligned)
 
-    present = [l for l in LABELS if l in set(yt) | set(yp)]
+    present = [label for label in LABELS if label in set(yt) | set(yp)]
     cm = confusion_matrix(yt, yp, labels=present)
 
     if normalize:
