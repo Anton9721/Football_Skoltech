@@ -1,9 +1,149 @@
 """
-finetune_metric.py
-Дообучение OSNet / DINO методами metric learning (SupCon или Triplet hard mining).
-Предназначен для запуска из Jupyter notebook через finetune(args).
-"""
+src/finetune_metric.py
+======================
+Fine-tuning pipeline for OSNet and DINO using metric learning.
+Supports Supervised Contrastive Loss (SupCon) and Triplet Hard Mining.
+Designed to be called from a Jupyter notebook via finetune(args).
 
+------------------------------------------------------------------------------
+Constants
+------------------------------------------------------------------------------
+
+TRANSFORMS : dict[str, transforms.Compose]
+    Model-specific augmentation and preprocessing pipelines.
+    Keys: "osnet", "dino" (train), "val_osnet", "val_dino" (inference).
+    Train transforms include RandomHorizontalFlip and ColorJitter.
+    Val transforms apply only resize + normalize.
+
+------------------------------------------------------------------------------
+Classes
+------------------------------------------------------------------------------
+
+CropDataset(Dataset)
+    PyTorch Dataset over a split manifest dataframe.
+
+    __init__(df, crop_root, transform, label2idx)
+        Input:  df        : pd.DataFrame       — split manifest with "crop_path"
+                                                 and "color_label" columns
+                crop_root : str                — root directory for crop images
+                transform : transforms.Compose — preprocessing pipeline
+                label2idx : dict[str, int]     — maps color label → integer index
+        Output: —
+
+    __getitem__(idx: int) -> tuple[Tensor, int]
+        Output: tuple of
+                  Tensor  — transformed image
+                  int     — integer class label
+
+--------------------------------------------------------------------------
+
+PKSampler(Sampler)
+    Batch sampler that yields P classes x K samples per batch.
+    Number of batches is inferred as n_samples // (P * K).
+
+    __init__(labels: list[int], P: int, K: int)
+        Input:  labels : list[int]  — integer label for each dataset sample
+                P      : int        — number of classes per batch
+                K      : int        — number of samples per class
+
+    __iter__() -> Iterator[list[int]]
+        Output: indices for one batch of size P * K
+
+    __len__() -> int
+        Output: number of batches per epoch
+
+--------------------------------------------------------------------------
+
+SupConLoss(nn.Module)
+    Supervised Contrastive Loss with temperature scaling.
+    Numerically stabilized via per-row max subtraction.
+    Samples with no valid positives in the batch are excluded.
+
+    __init__(temperature: float = 0.07)
+    forward(embeddings: Tensor, labels: Tensor) -> Tensor
+        Input:  embeddings : (N, D) L2-normalized embedding matrix
+                labels     : (N,) integer class labels
+        Output: scalar loss Tensor
+
+--------------------------------------------------------------------------
+
+TripletHardLoss(nn.Module)
+    Batch hard triplet loss using cosine distance (dist = 1 - cosine_sim).
+    Selects hardest positive and hardest negative per anchor.
+
+    __init__(margin: float = 0.3)
+    forward(embeddings: Tensor, labels: Tensor) -> Tensor
+        Input:  embeddings : (N, D) L2-normalized embedding matrix
+                labels     : (N,) integer class labels
+        Output: scalar loss Tensor
+
+------------------------------------------------------------------------------
+Functions
+------------------------------------------------------------------------------
+
+build_osnet(freeze_bn: bool = True) -> tuple[nn.Module, int]
+    Load pretrained OSNet-x1.0, replace classifier with Identity.
+    Optionally freeze all BatchNorm2d layers.
+
+    Input:  freeze_bn : bool  — freeze BN statistics and parameters
+    Output: tuple[nn.Module, int]  — (model, embedding_dim=512)
+
+--------------------------------------------------------------------------
+
+build_dino(freeze_blocks: int = 8) -> tuple[nn.Module, int]
+    Load pretrained ViT-B/16 DINO via timm (num_classes=0).
+    Freezes patch embedding, positional embedding, and first N transformer blocks.
+
+    Input:  freeze_blocks : int  — number of transformer blocks to freeze
+    Output: tuple[nn.Module, int]  — (model, embedding_dim=768)
+
+--------------------------------------------------------------------------
+
+_train_epoch(model, loader, criterion, optimizer, device, freeze_bn) -> float
+    Run one training epoch. If freeze_bn=True, keeps BN layers in eval mode.
+
+    Input:  model     : nn.Module
+            loader    : DataLoader
+            criterion : nn.Module    — SupConLoss or TripletHardLoss
+            optimizer : Optimizer
+            device    : str | torch.device
+            freeze_bn : bool
+    Output: float  — mean training loss over all batches
+
+--------------------------------------------------------------------------
+
+_val_epoch(model, loader, criterion, device) -> float
+    Run one validation epoch under torch.no_grad().
+
+    Input:  model     : nn.Module
+            loader    : DataLoader
+            criterion : nn.Module
+            device    : str | torch.device
+    Output: float  — mean validation loss over all batches
+
+--------------------------------------------------------------------------
+
+finetune(args: SimpleNamespace) -> tuple[list[tuple[float, float]], str]
+    Main entry point — call from a Jupyter notebook.
+    Loads data, builds model, trains with PK sampling, saves best checkpoint.
+    Checkpoint is saved whenever validation loss improves.
+
+    Input:  args : SimpleNamespace with fields:
+                model     : str    — "osnet" | "dino"
+                loss      : str    — "supcon" | "triplet"
+                manifest  : str    — path to manifest_with_splits.csv
+                crop_root : str    — root directory for crop images
+                epochs    : int
+                P         : int    — classes per batch
+                K         : int    — samples per class
+                lr        : float
+                freeze_bn : bool   — freeze BN layers (OSNet only)
+                ckpt_dir  : str    — directory to save checkpoints
+                device    : str    — "cuda" | "cpu"
+    Output: tuple of
+              list[tuple[float, float]]  — per-epoch (train_loss, val_loss)
+              str                        — path to best checkpoint .pth file
+"""
 import os
 from collections import defaultdict
 
@@ -84,7 +224,7 @@ class CropDataset(Dataset):
 
 
 class PKSampler(Sampler):
-    """Каждый батч: P классов × K примеров."""
+    """Each batch contains P classes x K samples."""
 
     def __init__(self, labels, P, K):
         self.P = P
@@ -250,22 +390,6 @@ def _val_epoch(model, loader, criterion, device):
 
 
 def finetune(args):
-    """
-    Основная функция — вызывается из ноутбука.
-
-    args — types.SimpleNamespace со следующими полями:
-        model      : "osnet" | "dino"
-        loss       : "supcon" | "triplet"
-        manifest   : путь к manifest_split.csv
-        crop_root  : корневая папка датасета
-        epochs     : int
-        P          : классов в батче
-        K          : примеров на класс
-        lr         : float
-        freeze_bn  : bool  (только для osnet)
-        ckpt_dir   : куда сохранять .pth
-        device     : "cuda" | "cpu"
-    """
     os.makedirs(args.ckpt_dir, exist_ok=True)
 
     # ── Data ──────────────────────────────────────────────────────────────────
@@ -275,8 +399,8 @@ def finetune(args):
 
     all_colors = sorted(df["color_label"].dropna().unique())
     label2idx = {c: i for i, c in enumerate(all_colors)}
-    print(f"Цвета ({len(all_colors)}): {all_colors}")
-    print(f"Train: {len(df_train)} кропов  |  Val: {len(df_val)} кропов")
+    print(f"Labels ({len(all_colors)}): {all_colors}")
+    print(f"Train: {len(df_train)} crops  |  Val: {len(df_val)} crops")
 
     tr_tf = TRANSFORMS[args.model]
     val_tf = TRANSFORMS[f"val_{args.model}"]
@@ -308,7 +432,7 @@ def finetune(args):
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total = sum(p.numel() for p in model.parameters())
     print(
-        f"Модель: {args.model}  emb_dim={emb_dim}  "
+        f"Model: {args.model}  emb_dim={emb_dim}  "
         f"trainable={trainable:,} / {total:,}  loss={args.loss}"
     )
 
@@ -330,7 +454,7 @@ def finetune(args):
         eta_min=args.lr * 0.01,
     )
 
-    # -- Loop -----------------------------------------------------------------
+    # ── Training loop ─────────────────────────────────────────────────────────
     ckpt_path = os.path.join(args.ckpt_dir, f"{args.model}_{args.loss}_best.pth")
     best_val_loss = float("inf")
     history = []
