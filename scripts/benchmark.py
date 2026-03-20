@@ -242,6 +242,8 @@ def summarize_benchmark(benchmark_df):
         display(
             sub[["model", "method", "config", "mean_macro_f1", "mean_acc"]].round(4)
         )
+        
+    return summary
 
 
 def remove_game_from_benchmark(game, csv_path="benchmark.csv"):
