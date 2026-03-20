@@ -69,6 +69,7 @@ load_finetuned_model(
     Output: FeatureExtractor
     Raises: ValueError for unknown base_name
 """
+
 import clip
 import timm
 import torch

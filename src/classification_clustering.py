@@ -156,6 +156,7 @@ evaluate_single_method(
             seed      : int
     Output: pd.DataFrame  — results indexed by model name, sorted by macro_f1
 """
+
 import hdbscan
 import numpy as np
 import pandas as pd

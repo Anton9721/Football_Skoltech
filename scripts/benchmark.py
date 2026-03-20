@@ -36,12 +36,12 @@ run_benchmark(
     Creates parent directories of csv_path if missing.
 
     Input:
-        games             : list[str]                    — match IDs to evaluate
-        df                : pd.DataFrame                 — full annotation dataframe
-        all_model_names   : list[str]                    — all model keys to benchmark
-        pretrained_names  : list[str]                    — keys loaded via extract_all_models
-        finetuned_configs : dict[str, tuple[str, str]]   — {key: (arch, checkpoint_path)}
-        methods           : list[str]                    — clustering algorithms
+        games             : list[str]                       — match IDs to evaluate
+        df                : pd.DataFrame                    — full annotation dataframe
+        all_model_names   : list[str]                       — all model keys to benchmark
+        pretrained_names  : list[str]                       — keys loaded via extract_all_models
+        finetuned_configs : dict[str, tuple[str, str]]      — {key: (arch, checkpoint_path)}
+        methods           : list[str]                       — clustering algorithms
         configs           : list[tuple[str,bool,bool,bool]] — (name, is_umap, is_pca, is_scale)
         device            : str | torch.device
         csv_path          : str | Path
@@ -70,6 +70,8 @@ remove_game_from_benchmark(game: str, csv_path: str = "benchmark.csv") -> None
             csv_path : str  — path to the benchmark CSV
     Output: None  — file updated in place
 """
+
+from collections import defaultdict
 from itertools import product
 from pathlib import Path
 
@@ -115,7 +117,7 @@ def run_benchmark(
         existing = pd.read_csv(csv_path)
         done_pairs = set(zip(existing["game"], existing["model"]))
         print(
-            f"Загружен {csv_path}: {len(existing)} строк, уникальных (game, model): {len(done_pairs)}"
+            f"Loaded {csv_path}: {len(existing)} rows, unique (game, model) pairs: {len(done_pairs)}"
         )
     else:
         existing = pd.DataFrame()
@@ -123,16 +125,14 @@ def run_benchmark(
 
     todo = [(g, m) for g in games for m in all_model_names if (g, m) not in done_pairs]
     if not todo:
-        print("Все (game, model) пары уже посчитаны.")
+        print("All (game, model) pairs already computed.")
         return existing
 
     todo_games = sorted(set(g for g, _ in todo))
     todo_models = sorted(set(m for _, m in todo))
-    print(f"Новых пар: {len(todo)}")
-    print(f"  матчи:  {todo_games}")
-    print(f"  модели: {todo_models}")
-
-    from collections import defaultdict
+    print(f"New pairs: {len(todo)}")
+    print(f"  games:  {todo_games}")
+    print(f"  models: {todo_models}")
 
     todo_models_per_game = defaultdict(set)
     for g, m in todo:
@@ -144,7 +144,7 @@ def run_benchmark(
     for game in todo_games:
         df_match = get_match_df(df, game)
         if len(df_match) == 0:
-            print(f"  WARN: {game} — пустой df_match, пропускаем")
+            print(f"  WARN: {game} — empty df_match, skipping")
             continue
 
         needed_models = todo_models_per_game[game]
@@ -213,15 +213,11 @@ def run_benchmark(
             row.to_csv(csv_path, mode="a", header=not csv_path.exists(), index=False)
 
     benchmark_df = pd.read_csv(csv_path)
-    print(f"\nИтого строк: {len(benchmark_df)}")
+    print(f"\nTotal rows: {len(benchmark_df)}")
     return benchmark_df
 
 
 def summarize_benchmark(benchmark_df):
-    """
-    Агрегирует benchmark_df по модели/методу/конфигу и выводит сводные таблицы.
-    Возвращает summary DataFrame.
-    """
     summary = (
         benchmark_df.groupby(
             ["model", "is_finetuned", "method", "config"], as_index=False
@@ -235,27 +231,20 @@ def summarize_benchmark(benchmark_df):
         .reset_index(drop=True)
     )
 
-    # best = summary.iloc[0]
-
-    print("=== Полная сводка ===")
+    print("=== Full summary ===")
     display(summary.round(4))
 
     for base in ["osnet", "dino"]:
         sub = summary[summary["model"].str.startswith(base)].copy()
         if sub.empty:
             continue
-        print(f"\n=== {base}: pretrained vs finetuned (по mean_macro_f1) ===")
+        print(f"\n=== {base}: pretrained vs finetuned (by mean_macro_f1) ===")
         display(
             sub[["model", "method", "config", "mean_macro_f1", "mean_acc"]].round(4)
         )
 
-    # return None
-
 
 def remove_game_from_benchmark(game, csv_path="benchmark.csv"):
-    """
-    Удаляет все строки с указанным матчем из csv_path и сохраняет файл.
-    """
     df = pd.read_csv(csv_path)
     before = len(df)
 
@@ -263,5 +252,5 @@ def remove_game_from_benchmark(game, csv_path="benchmark.csv"):
     after = len(df)
 
     df.to_csv(csv_path, index=False)
-    print(f"Удалено строк: {before - after}  |  осталось: {after}")
-    print(f"Игры в файле: {sorted(df['game'].unique())}")
+    print(f"Rows removed: {before - after}  |  remaining: {after}")
+    print(f"Games in file: {sorted(df['game'].unique())}")

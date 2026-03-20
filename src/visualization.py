@@ -1,4 +1,3 @@
-
 """
 src/visualization.py
 ====================
@@ -117,6 +116,7 @@ plot_confusion_matrix_clustering(
     Output: pd.DataFrame  — aligned confusion matrix as a labeled dataframe
     Raises: ValueError if all points are noise
 """
+
 import base64
 import io
 

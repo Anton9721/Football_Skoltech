@@ -175,6 +175,7 @@ main() -> None
         sources_index.csv         — per-game extraction summary
         manifest_with_splits.csv  — manifest + "split" column (if --make_splits)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -558,8 +559,8 @@ def make_game_splits(games: list[str], train_ratio: float, val_ratio: float, see
     n_val = max(1, min(n_val, n - n_train - 1))
 
     train_games = set(games[:n_train])
-    val_games = set(games[n_train: n_train + n_val])
-    test_games = set(games[n_train + n_val:])
+    val_games = set(games[n_train : n_train + n_val])
+    test_games = set(games[n_train + n_val :])
 
     return train_games, val_games, test_games
 
