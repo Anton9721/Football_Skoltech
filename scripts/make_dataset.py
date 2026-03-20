@@ -1,4 +1,180 @@
-# make_dataset.py
+"""
+scripts/make_dataset.py
+=======================
+Build a player-crop dataset from annotated match data.
+Supports two modes: extracting crops from pre-saved images ("images")
+or directly from video frames ("video"). Outputs a crop manifest CSV
+and optionally a train/val/test split manifest.
+
+Usage:
+    python scripts/make_dataset.py --root ./data --out ./dataset_v1 --mode images
+    python scripts/make_dataset.py --root ./data --out ./dataset_v1 --mode video --make_splits
+
+------------------------------------------------------------------------------
+Functions
+------------------------------------------------------------------------------
+
+discover_games(root: Path) -> list[Path]
+    Scan root for valid game directories (must contain "images/" or "markup/").
+
+    Input:  root : Path  — root directory with game_* subdirectories
+    Output: list[Path]   — sorted list of discovered game directories
+
+--------------------------------------------------------------------------
+
+find_players_csv(game_dir: Path) -> Path
+    Locate the players annotation CSV inside <game_dir>/markup/.
+    Prefers "players.csv" if multiple CSVs exist.
+
+    Input:  game_dir : Path  — single game directory
+    Output: Path             — resolved path to the players CSV
+
+--------------------------------------------------------------------------
+
+find_video(game_dir: Path) -> Path
+    Find the first video file (mp4/mov/mkv/avi) in game_dir.
+
+    Input:  game_dir : Path  — single game directory
+    Output: Path             — path to the video file
+
+--------------------------------------------------------------------------
+
+infer_label(role_name, left2right) -> str
+    Convert raw annotation fields to a canonical role label.
+
+    Input:  role_name   : str | any  — raw role string from CSV
+            left2right  : int | str  — 1 → team_left, 0 → team_right
+    Output: str  — "goalkeeper" | "team_left" | "team_right"
+
+--------------------------------------------------------------------------
+
+safe_int(x) -> int | None
+    Parse a value to int, returning None on failure.
+
+    Input:  x : any
+    Output: int | None
+
+--------------------------------------------------------------------------
+
+clip_bbox(x1, y1, x2, y2, w, h) -> tuple[int, int, int, int]
+    Clamp bounding box coordinates to image boundaries.
+
+    Input:  x1, y1, x2, y2 : numeric  — raw bbox coords
+            w, h            : int      — image width and height
+    Output: tuple[int, int, int, int]  — clamped (x1, y1, x2, y2)
+
+--------------------------------------------------------------------------
+
+expand_bbox(x1, y1, x2, y2, w, h, pad: int) -> tuple[int, int, int, int]
+    Expand bbox by pad pixels on all sides, clamped to image boundaries.
+
+    Input:  x1, y1, x2, y2 : int  — bbox coords (already clipped)
+            w, h            : int  — image dimensions
+            pad             : int  — pixels to add on each side
+    Output: tuple[int, int, int, int]  — expanded (x1, y1, x2, y2)
+
+--------------------------------------------------------------------------
+
+pick_image_path(images_dir: Path, row: pd.Series) -> Path
+    Resolve the source image path from a CSV row by trying known column
+    names and frame_idx-based glob patterns.
+
+    Input:  images_dir : Path       — directory containing frame images
+            row        : pd.Series  — single annotation row
+    Output: Path  — resolved image path
+    Raises: FileNotFoundError if no matching image is found
+
+--------------------------------------------------------------------------
+
+normalize_columns(df: pd.DataFrame) -> pd.DataFrame
+    Rename CSV columns to canonical names (x1/y1/x2/y2, role_name,
+    left2right, player_id, frame_idx, image_file). Raises ValueError
+    if any required column is missing after renaming.
+
+    Input:  df : pd.DataFrame  — raw annotation dataframe
+    Output: pd.DataFrame       — dataframe with standardized column names
+
+--------------------------------------------------------------------------
+
+build_dataset_for_game_images(
+    game_dir      : Path,
+    out_crops_dir : Path,
+    min_wh        : int = 20,
+    jpeg_quality  : int = 90,
+    pad           : int = 0,
+) -> tuple[pd.DataFrame, int, str]
+    Extract player crops from pre-saved images for one game.
+    Skips crops smaller than min_wh or with invalid bbox.
+
+    Input:  game_dir      : Path  — game directory with images/ and markup/
+            out_crops_dir : Path  — directory to save crop JPEGs
+            min_wh        : int   — minimum crop width/height in pixels
+            jpeg_quality  : int   — JPEG compression quality (0–100)
+            pad           : int   — bbox padding in pixels
+    Output: tuple of
+              pd.DataFrame  — records for saved crops
+              int           — number of skipped/bad rows
+              str           — path to the source players CSV
+
+--------------------------------------------------------------------------
+
+build_dataset_for_game_video(
+    game_dir      : Path,
+    out_crops_dir : Path,
+    video_path    : Path | None = None,
+    players_csv   : Path | None = None,
+    min_wh        : int = 20,
+    jpeg_quality  : int = 90,
+    pad           : int = 0,
+    frame_stride  : int = 1,
+) -> tuple[pd.DataFrame, int, str, str]
+    Extract player crops by seeking to annotated frames in a video.
+    Requires "frame_idx" column in the players CSV.
+
+    Input:  game_dir      : Path       — game directory
+            out_crops_dir : Path       — directory to save crop JPEGs
+            video_path    : Path|None  — explicit video path; auto-detected if None
+            players_csv   : Path|None  — explicit CSV path; auto-detected if None
+            min_wh        : int        — minimum crop size in pixels
+            jpeg_quality  : int        — JPEG quality (0–100)
+            pad           : int        — bbox padding in pixels
+            frame_stride  : int        — process every N-th frame (>=1)
+    Output: tuple of
+              pd.DataFrame  — records for saved crops
+              int           — number of skipped/bad rows
+              str           — path to the source players CSV
+              str           — path to the source video file
+
+--------------------------------------------------------------------------
+
+make_game_splits(
+    games       : list[str],
+    train_ratio : float,
+    val_ratio   : float,
+    seed        : int,
+) -> tuple[set, set, set]
+    Split game IDs into train/val/test sets by ratio.
+    Test ratio is the remainder: 1 - train_ratio - val_ratio.
+
+    Input:  games       : list[str]  — all unique game IDs
+            train_ratio : float      — fraction for train (>0)
+            val_ratio   : float      — fraction for val (>0)
+            seed        : int        — random seed for shuffling
+    Output: tuple[set, set, set]  — (train_games, val_games, test_games)
+
+--------------------------------------------------------------------------
+
+main() -> None
+    CLI entry point. Parses arguments, runs crop extraction for all
+    discovered games, saves manifest.csv and sources_index.csv.
+    Optionally saves manifest_with_splits.csv if --make_splits is set.
+
+    Output files written to --out directory:
+        crops/                    — saved JPEG crops
+        manifest.csv              — all crop records with labels and metadata
+        sources_index.csv         — per-game extraction summary
+        manifest_with_splits.csv  — manifest + "split" column (if --make_splits)
+"""
 from __future__ import annotations
 
 import argparse
@@ -382,8 +558,8 @@ def make_game_splits(games: list[str], train_ratio: float, val_ratio: float, see
     n_val = max(1, min(n_val, n - n_train - 1))
 
     train_games = set(games[:n_train])
-    val_games = set(games[n_train : n_train + n_val])
-    test_games = set(games[n_train + n_val :])
+    val_games = set(games[n_train: n_train + n_val])
+    test_games = set(games[n_train + n_val:])
 
     return train_games, val_games, test_games
 
