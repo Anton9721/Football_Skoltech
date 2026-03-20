@@ -1,3 +1,98 @@
+"""
+src/metrics.py
+==============
+Evaluation metrics for classification and clustering tasks.
+Clustering metrics use the Hungarian algorithm for optimal
+cluster-to-class assignment before scoring.
+
+------------------------------------------------------------------------------
+Functions
+------------------------------------------------------------------------------
+
+crop_accuracy(y_true, y_pred) -> float
+    Wrapper around sklearn accuracy_score.
+
+    Input:  y_true, y_pred : array-like  — integer class labels
+    Output: float  — accuracy in [0, 1]
+
+--------------------------------------------------------------------------
+
+crop_macro_f1(y_true, y_pred) -> float
+    Wrapper around sklearn f1_score with average="macro".
+
+    Input:  y_true, y_pred : array-like  — integer class labels
+    Output: float  — macro F1 in [0, 1]
+
+--------------------------------------------------------------------------
+
+clustering_accuracy(y_true, y_pred) -> float
+    Compute clustering accuracy via Hungarian assignment on a
+    square cost matrix of size max(n_clusters, n_classes).
+
+    Input:  y_true : array-like  — ground-truth integer labels
+            y_pred : array-like  — cluster assignment integers (no -1 noise)
+    Output: float  — optimal assignment accuracy in [0, 1]
+
+--------------------------------------------------------------------------
+
+align_clusters(y_true, clusters) -> tuple[np.ndarray, dict]
+    Map cluster IDs to true class labels using the Hungarian algorithm
+    on a (n_classes x n_clusters) confusion matrix.
+    Unmatched clusters are assigned to the argmax class as fallback.
+
+    Input:  y_true   : array-like  — ground-truth integer labels
+            clusters : array-like  — cluster assignment integers (no -1 noise)
+    Output: tuple of
+              np.ndarray  — cluster array remapped to true class label space
+              dict        — {cluster_id: true_class_label} mapping
+
+--------------------------------------------------------------------------
+
+macro_f1_clustering(y_true, clusters) -> float
+    Align clusters to true labels via Hungarian matching, then compute
+    macro F1. Noise points (cluster == -1) are excluded before alignment.
+
+    Input:  y_true   : array-like  — ground-truth integer labels
+            clusters : array-like  — cluster assignments, -1 = noise
+    Output: float  — macro F1 in [0, 1]
+
+--------------------------------------------------------------------------
+
+assign_labels_by_size(clusters: np.ndarray) -> np.ndarray
+    Assign role labels by cluster size (largest → team_left,
+    second → team_right, remaining → goalkeeper).
+    Fallback for inference without ground-truth labels.
+    Noise points (cluster == -1) are mapped to "noise".
+
+    Input:  clusters : np.ndarray  — cluster assignment integers
+    Output: np.ndarray  — string label array
+
+--------------------------------------------------------------------------
+
+silhouette_scores(X, y) -> tuple[float, float]
+    Compute silhouette score under both euclidean and cosine metrics.
+
+    Input:  X : np.ndarray  — (N, D) embedding matrix
+            y : array-like  — cluster or class labels
+    Output: tuple[float, float]  — (silhouette_euclidean, silhouette_cosine)
+
+--------------------------------------------------------------------------
+
+get_confusion_matrix(
+    y_true        : array-like,
+    y_pred        : array-like,
+    is_clustering : bool = False,
+) -> tuple[np.ndarray, dict | None]
+    Compute confusion matrix, optionally aligning cluster IDs to true
+    labels first via align_clusters.
+
+    Input:  y_true        : array-like  — ground-truth labels
+            y_pred        : array-like  — predicted labels or cluster IDs
+            is_clustering : bool        — if True, run Hungarian alignment
+    Output: tuple of
+              np.ndarray    — confusion matrix
+              dict | None   — cluster→class mapping (None if not clustering)
+"""
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, silhouette_score
