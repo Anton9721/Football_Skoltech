@@ -1,15 +1,57 @@
 """
-MatrixVisualizer — интерактивный heatmap для произвольной матрицы чисел.
+src/MatrixVisualizer.py
+=======================
+Interactive Bokeh heatmap for arbitrary numeric matrices.
+Runs a local Bokeh server inside a Jupyter notebook via viz.show().
 
-Возможности:
-  - Покраска через QuantileTransformer (по строкам / столбцам / глобально)
-  - Палитра coolwarm + colorbar
-  - Сортировка строк по кластерам HDBSCAN
-  - Зум: подписи Y-оси становятся читаемы при увеличении
-  - Выделение строк (Tap / BoxSelect) → список в текстовом поле + кнопка «Копировать»
-  - Все виджеты — только Python-коллбэки (кроме JS-копирования в буфер)
-  - Ячейки с raw==1.0 красятся в жёлтый, raw==0.0 — в сиреневый (поверх quantile)
-  - Запуск: viz.show()  — поднимает локальный Bokeh-сервер в ноутбуке
+Features:
+  - Per-row / per-column / global quantile color normalization
+  - Coolwarm palette + colorbar
+  - Automatic row sorting by HDBSCAN clustering
+  - Zoom: Y-axis labels become readable when zoomed in
+  - Row selection (Tap / BoxSelect) → label list in text area + Copy button
+  - All widgets use Python callbacks (except JS clipboard copy)
+  - Cells with raw == 1.0 are colored yellow; raw == 0.0 are colored purple
+
+------------------------------------------------------------------------------
+Classes
+------------------------------------------------------------------------------
+
+MatrixVisualizer
+    Interactive heatmap widget for a 2D numeric matrix.
+
+    __init__(
+        matrix    : np.ndarray | pd.DataFrame,
+        y_labels  : list[str] | None  = None,
+        x_labels  : list[str] | None  = None,
+        title     : str               = "Matrix Visualizer",
+        pure_one  : float             = 1.0,
+        pure_zero : float             = 0.0,
+    )
+        Input:  matrix    : (N, K) array or DataFrame
+                y_labels  : row labels; auto "feature_i" if None
+                x_labels  : column labels; auto "col_j" if None
+                title     : plot title
+                pure_one  : raw value highlighted in yellow
+                pure_zero : raw value highlighted in purple
+
+    show(port: int = 0, open_browser: bool = True) -> None
+        Start the local Bokeh server on the given port (0 = auto).
+        Opens the browser automatically if open_browser=True.
+
+    stop() -> None
+        Shut down the running Bokeh IOLoop and server.
+
+------------------------------------------------------------------------------
+Functions
+------------------------------------------------------------------------------
+
+quantile_transform_1d(arr: np.ndarray, n_quantiles: int | None = None) -> np.ndarray
+    Apply sklearn QuantileTransformer (uniform output) to a 1D array.
+
+    Input:  arr         : np.ndarray  — 1D numeric array
+            n_quantiles : int | None  — number of quantiles; defaults to len(arr)
+    Output: np.ndarray  — transformed values in [0, 1]
 """
 
 import threading
@@ -56,16 +98,6 @@ COLOR_PURE_ZERO = "#cc66ff"
 
 
 class MatrixVisualizer:
-    """
-    Параметры
-    ----------
-    matrix      : np.ndarray (N x K) или pd.DataFrame
-    y_labels    : list[str] — подписи строк (признаки); None -> "feature_i"
-    x_labels    : list[str] — подписи столбцов;         None -> "col_j"
-    title       : str
-    pure_one    : float | None  — raw-значение, которое красить жёлтым  (default 1.0)
-    pure_zero   : float | None  — raw-значение, которое красить сиреневым (default 0.0)
-    """
 
     def __init__(
         self,
@@ -113,7 +145,7 @@ class MatrixVisualizer:
             self.matrix = self.matrix[order]
             self.y_labels = [self.y_labels[i] for i in order]
         except Exception as exc:
-            print(f"[MatrixVisualizer] HDBSCAN пропущен: {exc}")
+            print(f"[MatrixVisualizer] HDBSCAN skipped: {exc}")
 
     def _color_matrix(self, axis: str = "rows") -> np.ndarray:
         N, K = self.matrix.shape
@@ -293,13 +325,13 @@ class MatrixVisualizer:
                     <div style="width:16px;height:16px;
                                 background:{COLOR_PURE_ONE};
                                 border:1px solid #aaa;"></div>
-                    Чистый 1
+                    Pure 1
                 </div>
                 <div style="display:flex; align-items:center; gap:6px;">
                     <div style="width:16px;height:16px;
                                 background:{COLOR_PURE_ZERO};
                                 border:1px solid #aaa;"></div>
-                    Чистый 0
+                    Pure 0
                 </div>
             </div>
         """,
@@ -307,18 +339,18 @@ class MatrixVisualizer:
         )
 
         axis_select = Select(
-            title="Нормализация цвета:",
+            title="Color normalization:",
             value="rows",
             options=[
-                ("rows", "По строкам (по умолчанию)"),
-                ("columns", "По столбцам"),
-                ("global", "Глобальная"),
+                ("rows", "By rows (default)"),
+                ("columns", "By columns"),
+                ("global", "Global"),
             ],
             width=260,
         )
-        selected_label = Div(text="<b>Выбранные признаки:</b>")
+        selected_label = Div(text="<b>Selected features:</b>")
         text_area = TextAreaInput(value="", rows=4, width=plot_w - 180)
-        copy_btn = Button(label="Копировать", button_type="success", width=160)
+        copy_btn = Button(label="Copy", button_type="success", width=160)
 
         copy_btn.js_on_click(
             CustomJS(
