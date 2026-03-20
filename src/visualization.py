@@ -1,3 +1,122 @@
+
+"""
+src/visualization.py
+====================
+Interactive Plotly/ipywidgets visualizations for embedding analysis
+and clustering evaluation. Designed for Jupyter notebook usage.
+
+------------------------------------------------------------------------------
+Constants
+------------------------------------------------------------------------------
+
+LABELS       : list[str]        — canonical class order for confusion matrices
+LABEL_COLORS : dict[str, str]   — hex color per class for scatter plots
+
+------------------------------------------------------------------------------
+Functions
+------------------------------------------------------------------------------
+
+_to_base64(path: str, max_side: int = 256) -> str
+    Load an image, resize so the longest side <= max_side, encode as JPEG
+    base64 string for inline HTML embedding.
+
+    Input:  path     : str  — path to image file
+            max_side : int  — maximum pixel dimension after resize
+    Output: str  — base64-encoded JPEG string
+
+--------------------------------------------------------------------------
+
+_to_str_labels(y) -> list[str]
+    Convert integer label array to string labels using LABELS list.
+    Non-integer arrays are cast to str directly.
+
+    Input:  y : array-like  — integer indices or string labels
+    Output: list[str]  — string label list
+
+--------------------------------------------------------------------------
+
+_sample(X, y, df, n, seed) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]
+    Randomly subsample embeddings, labels, and dataframe rows together.
+    Returns inputs unchanged if n is None or len(X) <= n.
+
+    Input:  X, y : array-like    — embeddings and labels
+            df   : pd.DataFrame  — metadata aligned with X
+            n    : int | None    — target sample size
+            seed : int
+    Output: tuple[np.ndarray, np.ndarray, pd.DataFrame]
+
+--------------------------------------------------------------------------
+
+reduce_embeddings(X: np.ndarray, method: str = "umap", seed: int = 42) -> np.ndarray
+    Reduce embedding dimensionality to 2D for scatter plotting.
+
+    Input:  X      : np.ndarray  — (N, D) float32 embeddings
+            method : str         — "umap" | "tsne" | "pca"
+            seed   : int
+    Output: np.ndarray  — (N, 2) 2D projection
+    Raises: ValueError for unknown method
+
+--------------------------------------------------------------------------
+
+interactive_embedding_view(
+    X               : np.ndarray,
+    y               : array-like,
+    df              : pd.DataFrame,
+    method          : str  = "umap",
+    sample_n        : int  = 3000,
+    seed            : int  = 42,
+    point_size      : int  = 6,
+    preload_images  : bool = True,
+) -> go.FigureWidget
+    Interactive 2D scatter plot of embeddings colored by class label.
+    Hover shows a crop thumbnail (if preload_images=True).
+    Click shows enlarged crop image in a side panel.
+
+    Input:  X              : np.ndarray   — (N, D) embeddings
+            y              : array-like   — (N,) integer or string labels
+            df             : pd.DataFrame — must contain "crop_path";
+                                            optionally game, frame_idx,
+                                            player_id, split
+            method         : str          — dimensionality reduction method
+            sample_n       : int | None   — max points to display
+            seed           : int
+            point_size     : int          — marker size in pixels
+            preload_images : bool         — pre-encode thumbnails for hover
+    Output: go.FigureWidget  — interactive Plotly figure widget
+    Raises: ValueError if "crop_path" column is missing from df
+
+--------------------------------------------------------------------------
+
+plot_confusion_matrix(
+    y_true    : array-like,
+    y_pred    : array-like,
+    normalize : bool = False,
+) -> pd.DataFrame
+    Interactive Plotly confusion matrix for classification results.
+
+    Input:  y_true, y_pred : array-like  — integer or string labels
+            normalize      : bool        — show row-normalized fractions
+                                           instead of counts
+    Output: pd.DataFrame  — confusion matrix as a labeled dataframe
+
+--------------------------------------------------------------------------
+
+plot_confusion_matrix_clustering(
+    y_true    : array-like,
+    clusters  : array-like,
+    normalize : bool = False,
+) -> pd.DataFrame
+    Interactive Plotly confusion matrix for clustering results.
+    Noise points (cluster == -1) are excluded before alignment.
+    Cluster IDs are mapped to true labels via Hungarian matching.
+    Noise fraction is shown in the plot subtitle.
+
+    Input:  y_true   : array-like  — ground-truth integer or string labels
+            clusters : array-like  — cluster assignments, -1 = noise
+            normalize : bool       — show row-normalized fractions
+    Output: pd.DataFrame  — aligned confusion matrix as a labeled dataframe
+    Raises: ValueError if all points are noise
+"""
 import base64
 import io
 
@@ -92,43 +211,29 @@ def interactive_embedding_view(
     point_size: int = 6,
     preload_images: bool = True,
 ):
-    """
-    Интерактивный scatter plot эмбеддингов.
-    Hover  — превью кропа (если preload_images=True).
-    Клик   — увеличенное фото + метаданные в панели справа.
-
-    Parameters
-    ----------
-    X               : (N, D) эмбеддинги
-    y               : (N,)   метки int или str
-    df              : DataFrame с колонками crop_path, game, frame_idx, player_id
-    method          : 'umap' | 'tsne' | 'pca'
-    sample_n        : кол-во точек (None = все)
-    preload_images  : кодировать картинки заранее для hover
-    """
     if "crop_path" not in df.columns:
-        raise ValueError("df должен содержать колонку 'crop_path'")
+        raise ValueError("df must contain 'crop_path' column")
 
     Xs, ys, dfs = _sample(X, y, df, sample_n, seed)
     labels_str = _to_str_labels(ys)
 
-    print(f"Снижение размерности ({method.upper()}) для {len(Xs)} точек...")
+    print(f"Dimensionality reduction ({method.upper()}) for {len(Xs)} points...")
     Z = reduce_embeddings(Xs, method=method, seed=seed)
-    print("Готово.")
+    print("Done.")
 
     meta_cols = [
         c for c in ["game", "frame_idx", "player_id", "split"] if c in dfs.columns
     ]
 
     if preload_images:
-        print("Кодирование изображений...")
+        print("Encoding images...")
         b64_list = []
         for path in dfs["crop_path"]:
             try:
                 b64_list.append(_to_base64(path, max_side=96))
             except Exception:
                 b64_list.append("")
-        print("Готово.")
+        print("Done.")
     else:
         b64_list = [""] * len(dfs)
 
@@ -143,7 +248,7 @@ def interactive_embedding_view(
         }
     )
 
-    # customdata порядок: [label, meta..., b64]
+    # customdata order: [label, meta..., b64]
     custom_cols = ["label"] + meta_cols + ["b64"]
     customdata = df_plot[custom_cols].values
 
@@ -184,10 +289,10 @@ def interactive_embedding_view(
         )
 
     fig.update_layout(
-        title=f"{method.upper()} — {len(df_plot)} точек",
+        title=f"{method.upper()} — {len(df_plot)} points",
         height=680,
         plot_bgcolor="#f8f9fa",
-        legend=dict(title="Класс", itemsizing="constant"),
+        legend=dict(title="Class", itemsizing="constant"),
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         margin=dict(l=20, r=20, t=50, b=20),
@@ -196,7 +301,7 @@ def interactive_embedding_view(
 
     figw = go.FigureWidget(fig)
 
-    # ── панель клика ──────────────────────────────────────────────────────────
+    # ── click panel ───────────────────────────────────────────────────────────
     img_out = widgets.Output(layout=widgets.Layout(width="250px"))
     meta_out = widgets.Output(layout=widgets.Layout(width="250px"))
 
@@ -245,7 +350,7 @@ def interactive_embedding_view(
                         )
                     )
                 except Exception as e:
-                    display(HTML(f'<span style="color:#ef4444">Ошибка: {e}</span>'))
+                    display(HTML(f'<span style="color:#ef4444">Error: {e}</span>'))
 
         with meta_out:
             clear_output(wait=True)
@@ -284,14 +389,6 @@ def interactive_embedding_view(
 
 
 def plot_confusion_matrix(y_true, y_pred, normalize: bool = False):
-    """
-    Интерактивная confusion matrix.
-
-    Parameters
-    ----------
-    y_true, y_pred : int (0/1/2) или str метки
-    normalize      : True — показывает доли, False — абсолютные числа
-    """
     yt = _to_str_labels(y_true)
     yp = _to_str_labels(y_pred)
 
@@ -329,16 +426,6 @@ def plot_confusion_matrix(y_true, y_pred, normalize: bool = False):
 
 
 def plot_confusion_matrix_clustering(y_true, clusters, normalize: bool = False):
-    """
-    Интерактивная confusion matrix для кластеризации.
-    Для HDBSCAN шумовые точки (-1) исключаются из матрицы.
-
-    Parameters
-    ----------
-    y_true     : истинные метки
-    clusters   : метки кластеров
-    normalize  : True — показывает доли, False — абсолютные числа
-    """
     y_true = np.asarray(y_true)
     clusters = np.asarray(clusters)
 
@@ -346,7 +433,7 @@ def plot_confusion_matrix_clustering(y_true, clusters, normalize: bool = False):
 
     if mask.sum() == 0:
         raise ValueError(
-            "Все объекты помечены как noise (-1), confusion matrix построить нельзя."
+            "All points are labeled as noise (-1), cannot build confusion matrix."
         )
 
     y_true_clean = y_true[mask]
