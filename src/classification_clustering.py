@@ -1,3 +1,161 @@
+"""
+src/classification_clustering.py
+=================================
+Classification and clustering evaluation utilities for player embedding benchmarks.
+Covers preprocessing, supervised classifiers (LogReg, MLP), and unsupervised
+clustering (KMeans, HDBSCAN, GMM) with optional UMAP / PCA / scaling pipelines.
+
+------------------------------------------------------------------------------
+Functions
+------------------------------------------------------------------------------
+
+l2norm(X: np.ndarray, eps: float = 1e-12) -> np.ndarray
+    L2-normalize each row of an embedding matrix.
+
+    Input:  X   : np.ndarray  — (N, D) embedding matrix
+            eps : float       — clipping floor to avoid division by zero
+    Output: np.ndarray  — (N, D) row-normalized matrix
+
+--------------------------------------------------------------------------
+
+run_classification(
+    X          : np.ndarray,
+    y          : np.ndarray,
+    method     : str   = "log_reg",
+    test_size  : float = 0.2,
+    seed       : int   = 42,
+) -> tuple[dict, np.ndarray]
+    Train and evaluate a supervised classifier on a stratified train/test split.
+    Embeddings are L2-normalized before fitting.
+
+    Input:  X         : np.ndarray  — (N, D) embeddings
+            y         : np.ndarray  — (N,) class labels
+            method    : str         — "log_reg" | "mlp"
+            test_size : float       — fraction of data for evaluation
+            seed      : int         — random seed
+    Output: tuple of
+              dict          — {"accuracy": float, "macro_f1": float}
+              np.ndarray    — predicted labels on test set
+
+--------------------------------------------------------------------------
+
+_apply_preprocessing(
+    X        : np.ndarray,
+    is_umap  : bool = False,
+    is_pca   : bool = False,
+    is_scale : bool = False,
+    seed     : int  = 42,
+) -> np.ndarray
+    Apply L2 normalization followed by optional PCA → UMAP → StandardScaler.
+    PCA components capped at min(31, D, N-1).
+
+    Input:  X        : np.ndarray  — (N, D) embeddings
+            is_pca   : bool        — apply PCA before UMAP
+            is_umap  : bool        — apply UMAP (n_components=10, cosine metric)
+            is_scale : bool        — apply StandardScaler after UMAP
+            seed     : int         — random seed for PCA and UMAP
+    Output: np.ndarray  — preprocessed embedding matrix
+
+--------------------------------------------------------------------------
+
+run_clustering(
+    X        : np.ndarray,
+    y        : np.ndarray,
+    method   : str  = "kmeans",
+    is_umap  : bool = False,
+    is_pca   : bool = False,
+    is_scale : bool = False,
+    seed     : int  = 42,
+) -> tuple[dict, np.ndarray]
+    Preprocess embeddings and run a clustering algorithm.
+    HDBSCAN metrics are penalized by noise fraction (metric * coverage).
+
+    Input:  X        : np.ndarray  — (N, D) embeddings
+            y        : np.ndarray  — (N,) ground-truth labels
+            method   : str         — "kmeans" | "hdbscan" | "gmm"
+            is_umap  : bool        — enable UMAP reduction
+            is_pca   : bool        — enable PCA before UMAP
+            is_scale : bool        — enable StandardScaler after UMAP
+            seed     : int         — random seed
+    Output: tuple of
+              dict        — {clustering_accuracy, macro_f1_cluster,
+                             n_clusters, noise_fraction}
+              np.ndarray  — raw cluster assignment labels
+
+--------------------------------------------------------------------------
+
+evaluate_model_classification(
+    name      : str,
+    X         : np.ndarray,
+    y         : np.ndarray,
+    method    : str,
+    test_size : float = 0.2,
+    seed      : int   = 42,
+) -> dict
+    Wrapper around run_classification that tags results with a model name.
+
+    Input:  name      : str        — model identifier
+            X, y      : np.ndarray — embeddings and labels
+            method    : str        — "log_reg" | "mlp"
+            test_size : float
+            seed      : int
+    Output: dict  — {"model": str, "accuracy": float, "macro_f1": float}
+
+--------------------------------------------------------------------------
+
+evaluate_model_clustering(
+    name   : str,
+    X      : np.ndarray,
+    y      : np.ndarray,
+    method : str,
+    seed   : int = 42,
+) -> dict
+    Run clustering across four preset preprocessing variants:
+    raw, _umap, _umap_pca, _umap_pca_scale.
+
+    Input:  name   : str        — model identifier
+            X, y   : np.ndarray — embeddings and labels
+            method : str        — "kmeans" | "hdbscan" | "gmm"
+            seed   : int
+    Output: dict  — model name + per-variant accuracy, macro_f1,
+                    n_clusters, noise_fraction columns
+
+--------------------------------------------------------------------------
+
+compare_models(
+    models    : dict[str, tuple[np.ndarray, np.ndarray]],
+    test_size : float = 0.2,
+    seed      : int   = 42,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]
+    Run full evaluation across all models for log_reg, mlp, kmeans,
+    hdbscan, and gmm. Results are sorted by macro_f1 descending.
+
+    Input:  models    : dict  — {model_name: (X, y)}
+            test_size : float
+            seed      : int
+    Output: tuple of four pd.DataFrames —
+              df_class    — classification results (log_reg + mlp)
+              df_kmeans   — KMeans clustering results
+              df_hdbscan  — HDBSCAN clustering results
+              df_gmm      — GMM clustering results
+
+--------------------------------------------------------------------------
+
+evaluate_single_method(
+    models    : dict[str, tuple[np.ndarray, np.ndarray]],
+    method    : str,
+    test_size : float = 0.2,
+    seed      : int   = 42,
+) -> pd.DataFrame
+    Evaluate all models with a single specified method.
+    Routes to classification or clustering based on method name.
+
+    Input:  models    : dict  — {model_name: (X, y)}
+            method    : str   — "log_reg" | "mlp" | "kmeans" | "hdbscan" | "gmm"
+            test_size : float — used only for classification methods
+            seed      : int
+    Output: pd.DataFrame  — results indexed by model name, sorted by macro_f1
+"""
 import hdbscan
 import numpy as np
 import pandas as pd
@@ -155,7 +313,6 @@ def run_clustering(
             "n_clusters": int(len(np.unique(clusters))),
             "noise_fraction": 0.0,
         }
-
 
     else:
         raise ValueError(f"not implemented method {method}")
