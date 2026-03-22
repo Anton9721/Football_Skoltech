@@ -126,6 +126,13 @@ _val_epoch(model, loader, criterion, device) -> float
 finetune(args: SimpleNamespace) -> tuple[list[tuple[float, float]], str]
     Main entry point — call from a Jupyter notebook.
     Loads data, builds model, trains with PK sampling, saves best checkpoint.
+
+    Resume behaviour (controlled by args.resume):
+        True  — if <ckpt_dir>/<model>_<loss>_best.pth exists, load its weights
+                and set best_val_loss from one validation pass before training,
+                so the checkpoint is only overwritten if the new run improves it.
+        False — always start from ImageNet-pretrained weights (original behaviour).
+
     Checkpoint is saved whenever validation loss improves.
 
     Input:  args : SimpleNamespace with fields:
@@ -140,6 +147,7 @@ finetune(args: SimpleNamespace) -> tuple[list[tuple[float, float]], str]
                 freeze_bn : bool   — freeze BN layers (OSNet only)
                 ckpt_dir  : str    — directory to save checkpoints
                 device    : str    — "cuda" | "cpu"
+                resume    : bool   — resume from existing checkpoint if found
     Output: tuple of
               list[tuple[float, float]]  — per-epoch (train_loss, val_loss)
               str                        — path to best checkpoint .pth file
@@ -301,7 +309,7 @@ def build_dino(freeze_blocks=8):
 
 
 class SupConLoss(nn.Module):
-    def __init__(self, temperature=0.07):
+    def __init__(self, temperature=0.2):
         super().__init__()
         self.temperature = temperature
 
@@ -386,6 +394,35 @@ def _val_epoch(model, loader, criterion, device):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Clustering eval on val set
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@torch.no_grad()
+def _val_clustering(model, loader, device, n_classes=3, seed=42):
+    """Extract val embeddings and compute KMeans clustering_accuracy + macro_f1."""
+    from sklearn.cluster import KMeans
+
+    from src.metrics import clustering_accuracy, macro_f1_clustering
+
+    model.eval()
+    feats, labels = [], []
+    for images, y in loader:
+        images = images.to(device)
+        emb = F.normalize(model(images), dim=-1)
+        feats.append(emb.cpu().numpy())
+        labels.append(y.numpy())
+
+    X = np.concatenate(feats)
+    y = np.concatenate(labels)
+
+    clusters = KMeans(n_clusters=n_classes, random_state=seed, n_init="auto").fit_predict(X)
+    acc = clustering_accuracy(y, clusters)
+    f1  = macro_f1_clustering(y, clusters)
+    return acc, f1
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -396,21 +433,21 @@ def finetune(args):
     # ── Data ──────────────────────────────────────────────────────────────────
     df = pd.read_csv(args.manifest)
     df_train = df[df["split"] == "train"].copy()
-    df_val = df[df["split"] == "val"].copy()
+    df_val   = df[df["split"] == "val"].copy()
 
     all_colors = sorted(df["color_label"].dropna().unique())
-    label2idx = {c: i for i, c in enumerate(all_colors)}
+    label2idx  = {c: i for i, c in enumerate(all_colors)}
     print(f"Labels ({len(all_colors)}): {all_colors}")
     print(f"Train: {len(df_train)} crops  |  Val: {len(df_val)} crops")
 
-    tr_tf = TRANSFORMS[args.model]
+    tr_tf  = TRANSFORMS[args.model]
     val_tf = TRANSFORMS[f"val_{args.model}"]
 
-    train_ds = CropDataset(df_train, args.crop_root, tr_tf, label2idx)
-    val_ds = CropDataset(df_val, args.crop_root, val_tf, label2idx)
+    train_ds = CropDataset(df_train, args.crop_root, tr_tf,  label2idx)
+    val_ds   = CropDataset(df_val,   args.crop_root, val_tf, label2idx)
 
     train_labels = [label2idx[c] for c in df_train["color_label"]]
-    sampler = PKSampler(train_labels, P=args.P, K=args.K)
+    sampler      = PKSampler(train_labels, P=args.P, K=args.K)
 
     train_loader = DataLoader(
         train_ds, batch_sampler=sampler, num_workers=0, pin_memory=True
@@ -430,16 +467,32 @@ def finetune(args):
         model, emb_dim = build_dino()
     model = model.to(args.device)
 
+    # ── Resume from checkpoint ────────────────────────────────────────────────
+    ckpt_path = os.path.join(args.ckpt_dir, f"{args.model}_{args.loss}_best.pth")
+    resume    = getattr(args, "resume", False)
+
+    if resume and os.path.exists(ckpt_path):
+        print(f"[resume] Loading weights from: {ckpt_path}")
+        model.load_state_dict(torch.load(ckpt_path, map_location=args.device))
+        _, best_val_f1 = _val_clustering(model, val_loader, args.device, n_classes=len(label2idx))
+        print(f"[resume] Baseline val_f1 from checkpoint: {best_val_f1:.4f}")
+    elif resume and not os.path.exists(ckpt_path):
+        print(f"[resume] Checkpoint not found at '{ckpt_path}', starting from pretrained weights.")
+        best_val_f1 = 0.0
+    else:
+        print("[resume=False] Starting from pretrained weights.")
+        best_val_f1 = 0.0
+
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    total = sum(p.numel() for p in model.parameters())
+    total_p   = sum(p.numel() for p in model.parameters())
     print(
         f"Model: {args.model}  emb_dim={emb_dim}  "
-        f"trainable={trainable:,} / {total:,}  loss={args.loss}"
+        f"trainable={trainable:,} / {total_p:,}  loss={args.loss}"
     )
 
     # ── Loss & optimizer ───────────────────────────────────────────────────────
     criterion = (
-        SupConLoss(temperature=0.07)
+        SupConLoss(temperature=0.2)
         if args.loss == "supcon"
         else TripletHardLoss(margin=0.3)
     )
@@ -455,10 +508,20 @@ def finetune(args):
         eta_min=args.lr * 0.01,
     )
 
+    # ── Reports dir & CSV ─────────────────────────────────────────────────────
+    reports_dir = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "reports"
+    )
+    os.makedirs(reports_dir, exist_ok=True)
+    csv_log_path = os.path.join(reports_dir, f"{args.model}_{args.loss}_history.csv")
+
+    _csv_header = ["epoch", "train_loss", "val_loss", "val_clustering_acc", "val_macro_f1"]
+    if not os.path.exists(csv_log_path):
+        pd.DataFrame(columns=_csv_header).to_csv(csv_log_path, index=False)
+        print(f"[log] {csv_log_path}")
+
     # ── Training loop ─────────────────────────────────────────────────────────
-    ckpt_path = os.path.join(args.ckpt_dir, f"{args.model}_{args.loss}_best.pth")
-    best_val_loss = float("inf")
-    history = []
+    history   = []
     freeze_bn = getattr(args, "freeze_bn", False)
 
     epoch_bar = tqdm(range(1, args.epochs + 1), desc="epochs", unit="ep")
@@ -478,34 +541,51 @@ def finetune(args):
         )
         for images, labels in batch_bar:
             images, labels = images.to(args.device), labels.to(args.device)
-            emb = F.normalize(model(images), dim=-1)
+            emb  = F.normalize(model(images), dim=-1)
             loss = criterion(emb, labels)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             tr_total += loss.item()
-            tr_n += 1
+            tr_n     += 1
             batch_bar.set_postfix(loss=f"{loss.item():.4f}")
         tr_loss = tr_total / max(tr_n, 1)
 
-        # -- val --
+        # -- val loss --
         val_loss = _val_epoch(model, val_loader, criterion, args.device)
         scheduler.step()
-        history.append((tr_loss, val_loss))
+
+        # -- val clustering --
+        n_classes = len(label2idx)
+        val_acc, val_f1 = _val_clustering(model, val_loader, args.device, n_classes=n_classes)
+
+        # -- history --
+        history.append({
+            "epoch":              epoch,
+            "train_loss":         tr_loss,
+            "val_loss":           val_loss,
+            "val_clustering_acc": val_acc,
+            "val_macro_f1":       val_f1,
+        })
+
+        # -- append row to CSV --
+        pd.DataFrame([history[-1]]).to_csv(csv_log_path, mode="a", header=False, index=False)
 
         saved = ""
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
+        if val_f1 > best_val_f1:
+            best_val_f1 = val_f1
             torch.save(model.state_dict(), ckpt_path)
             saved = " saved"
 
         epoch_bar.set_postfix(
-            train=f"{tr_loss:.4f}",
+            tr=f"{tr_loss:.4f}",
             val=f"{val_loss:.4f}",
-            best=f"{best_val_loss:.4f}",
+            acc=f"{val_acc:.3f}",
+            f1=f"{val_f1:.3f}",
+            best=f"{best_val_f1:.4f}",
             saved=saved,
         )
 
-    print(f"Best val loss: {best_val_loss:.4f}")
+    print(f"Best val f1: {best_val_f1:.4f}")
     print(f"Checkpoint:    {ckpt_path}")
     return history, ckpt_path
