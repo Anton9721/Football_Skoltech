@@ -228,7 +228,7 @@ def _apply_preprocessing(X, is_umap=False, is_pca=False, is_scale=False, seed=42
     if is_umap:
         reducer = umap.UMAP(
             n_components=10,
-            n_neighbors=30,
+            n_neighbors=15,
             min_dist=0.0,
             metric="cosine",
             random_state=seed,
