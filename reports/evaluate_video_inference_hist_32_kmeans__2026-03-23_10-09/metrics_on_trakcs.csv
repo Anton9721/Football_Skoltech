@@ -1,0 +1,10 @@
+game_id,n_rows,n_tracks,clustering_accuracy,macro_f1_cluster,gt_dist,pred_dist
+game_7_H1,17742,188,0.8191,0.7253,goalkeeper:11  team_left:96  team_right:81,others:29  team_1:70  team_2:89
+game_5_H1,23302,223,0.9058,0.6332,goalkeeper:4  team_left:107  team_right:112,others:17  team_1:96  team_2:110
+game_3_H1,23134,217,0.8802,0.6139,goalkeeper:13  team_left:106  team_right:98,others:6  team_1:98  team_2:113
+game_6_H1,25847,199,0.8794,0.612,goalkeeper:6  team_left:92  team_right:101,others:11  team_1:95  team_2:93
+game_8_H1,30775,139,0.741,0.564,goalkeeper:2  team_left:76  team_right:61,others:23  team_1:59  team_2:57
+game_1_H1,19285,187,0.738,0.5365,goalkeeper:9  team_left:87  team_right:91,others:23  team_1:101  team_2:63
+game_4_H1,25240,134,0.6194,0.4046,goalkeeper:3  team_left:66  team_right:65,others:4  team_1:33  team_2:97
+game_9_H1,27724,210,0.481,0.3937,goalkeeper:10  team_left:92  team_right:108,others:37  team_1:41  team_2:132
+game_2_H1,23558,167,0.4491,0.3634,goalkeeper:5  team_left:80  team_right:82,others:32  team_1:60  team_2:75
