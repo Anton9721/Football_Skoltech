@@ -188,7 +188,7 @@ def extract_all_models(
 
     for name in model_names:
         print(f"\n{'='*40}")
-        print(f"  модель: {name}")
+        print(f"model: {name}")
         print(f"{'='*40}")
 
         loader = get_loader(df_match, batch_size=batch_size, model_name=name)
