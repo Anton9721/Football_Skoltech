@@ -28,6 +28,10 @@ import pandas as pd
 import torch
 from PIL import Image
 from tqdm import tqdm
+from src.models import load_finetuned_model, load_model
+from sklearn.cluster import KMeans
+from src.classification_clustering import _apply_preprocessing
+
 
 try:
     from torchvision import transforms
@@ -316,7 +320,6 @@ def extract_embeddings_for_tracked_video(
     max_frames=None,
     transform=None,
 ):
-    from src.models import load_finetuned_model, load_model
 
     video_path = Path(video_path)
     tracked_df = tracked_df.sort_values(["frame_idx", "track_id"]).reset_index(drop=True)
@@ -431,9 +434,6 @@ def build_track_embeddings(emb_df, agg="mean", min_samples_per_track=10):
 def cluster_track_embeddings(
     track_df, n_clusters=3, is_umap=False, is_pca=False, is_scale=False, seed=42
 ):
-    from sklearn.cluster import KMeans
-    from src.classification_clustering import _apply_preprocessing
-
     X      = np.stack(track_df["track_embedding"].values)
     X_proc = _apply_preprocessing(X, is_umap=is_umap, is_pca=is_pca, is_scale=is_scale, seed=seed)
 
@@ -446,7 +446,7 @@ def cluster_track_embeddings(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Role assignment — size + position heuristic (no GT)
+# Role assignment — size + position heuristic
 # ─────────────────────────────────────────────────────────────────────────────
 
 
