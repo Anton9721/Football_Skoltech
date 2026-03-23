@@ -386,13 +386,31 @@ def interactive_embedding_view(
 
 
 # ─── confusion matrix ─────────────────────────────────────────────────────────
+def _remap_by_size(y_true, y_pred):
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+
+    classes, counts = np.unique(y_true, return_counts=True)
+    order = classes[np.argsort(-counts)]
+
+    if len(order) != 3:
+        raise ValueError(f"Expected 3 classes, got {len(order)}")
+
+    mapping = {
+        order[0]: "team_1",
+        order[1]: "team_2",
+        order[2]: "others",
+    }
+
+    yt = np.array([mapping[c] for c in y_true])
+    yp = np.array([mapping[c] for c in y_pred])
+    return yt, yp
 
 
 def plot_confusion_matrix(y_true, y_pred, normalize: bool = False):
-    yt = _to_str_labels(y_true)
-    yp = _to_str_labels(y_pred)
+    yt, yp = _remap_by_size(y_true, y_pred)
 
-    present = [label for label in LABELS if label in set(yt) | set(yp)]
+    present = ["team_1", "team_2", "others"]
     cm = confusion_matrix(yt, yp, labels=present)
 
     if normalize:
@@ -422,8 +440,7 @@ def plot_confusion_matrix(y_true, y_pred, normalize: bool = False):
         hovertemplate="True: %{y}<br>Predicted: %{x}<br>Value: %{z}<extra></extra>"
     )
     fig.show()
-    return df_cm
-
+    return df_cm, fig
 
 def plot_confusion_matrix_clustering(y_true, clusters, normalize: bool = False):
     y_true = np.asarray(y_true)
@@ -441,10 +458,9 @@ def plot_confusion_matrix_clustering(y_true, clusters, normalize: bool = False):
 
     clusters_aligned, _ = align_clusters(y_true_clean, clusters_clean)
 
-    yt = _to_str_labels(y_true_clean)
-    yp = _to_str_labels(clusters_aligned)
+    yt, yp = _remap_by_size(y_true_clean, clusters_aligned)
 
-    present = [label for label in LABELS if label in set(yt) | set(yp)]
+    present = ["team_1", "team_2", "others"]
     cm = confusion_matrix(yt, yp, labels=present)
 
     if normalize:
@@ -477,4 +493,4 @@ def plot_confusion_matrix_clustering(y_true, clusters, normalize: bool = False):
     )
     fig.show()
 
-    return df_cm
+    return df_cm, fig
