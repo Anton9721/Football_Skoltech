@@ -1,0 +1,1370 @@
+{
+  "game_1_H1": {
+    "right": {
+      "description": "red shirts with white sleeves, white shorts, red socks",
+      "color_label": "red"
+    },
+    "left": {
+      "description": "dark blue shirts, dark blue shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_left": {
+      "description": "all white goalkeeper kit (white shirt, white shorts, white socks)",
+      "color_label": "white"
+    }
+  },
+  "game_1_H2": {
+    "left": {
+      "description": "red shirts with white sleeves, white shorts, red socks",
+      "color_label": "red"
+    },
+    "right": {
+      "description": "dark blue shirts, dark blue shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "all white goalkeeper kit (white shirt, white shorts, white socks)",
+      "color_label": "white"
+    }
+  },
+  "game_2_H1": {
+    "right": {
+      "description": "dark navy/purple shirts, dark shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "left": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "goalkeeper_right": {
+      "description": "bright red/pink goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "red"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_2_H2": {
+    "left": {
+      "description": "dark navy/purple shirts, dark shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "right": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "bright red/pink goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "red"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_3_H1": {
+    "left": {
+      "description": "dark green shirts, black shorts, black socks",
+      "color_label": "green"
+    },
+    "right": {
+      "description": "white shirts with red accents, white shorts, white socks",
+      "color_label": "white_red"
+    },
+    "goalkeeper_left": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_3_H2": {
+    "right": {
+      "description": "dark green shirts, black shorts, black socks",
+      "color_label": "green"
+    },
+    "left": {
+      "description": "white shirts with red accents, white shorts, white socks",
+      "color_label": "white_red"
+    },
+    "goalkeeper_right": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_left": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_4_H1": {
+    "left": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "black shirts with red accents, black shorts, black socks",
+      "color_label": "red"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_4_H2": {
+    "right": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "left": {
+      "description": "black shirts with red accents, black shorts, black socks",
+      "color_label": "red"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_5_H1": {
+    "left": {
+      "description": "blue shirts with white sleeves, white shorts, white socks",
+      "color_label": "blue"
+    },
+    "right": {
+      "description": "red shirts, red shorts, red socks",
+      "color_label": "red"
+    },
+    "goalkeeper_left": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_5_H2": {
+    "right": {
+      "description": "blue shirts with white sleeves, white shorts, white socks",
+      "color_label": "blue"
+    },
+    "left": {
+      "description": "red shirts, red shorts, red socks",
+      "color_label": "red"
+    },
+    "goalkeeper_right": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_6_H1": {
+    "left": {
+      "description": "dark green shirts, green shorts, green socks",
+      "color_label": "green"
+    },
+    "right": {
+      "description": "white shirts with red accents, red shorts, red socks",
+      "color_label": "white_red"
+    },
+    "goalkeeper_left": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "black goalkeeper kit (black shirt, black shorts, black socks)",
+      "color_label": "black"
+    }
+  },
+  "game_6_H2": {
+    "right": {
+      "description": "dark green shirts, green shorts, green socks",
+      "color_label": "green"
+    },
+    "left": {
+      "description": "white shirts with red accents, red shorts, red socks",
+      "color_label": "white_red"
+    },
+    "goalkeeper_right": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_left": {
+      "description": "black goalkeeper kit (black shirt, black shorts, black socks)",
+      "color_label": "black"
+    }
+  },
+  "game_7_H1": {
+    "left": {
+      "description": "red shirts, red shorts, red socks",
+      "color_label": "red"
+    },
+    "right": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_left": {
+      "description": "black goalkeeper kit (black shirt, black shorts, black socks)",
+      "color_label": "black"
+    }
+  },
+  "game_7_H2": {
+    "right": {
+      "description": "red shirts, red shorts, red socks",
+      "color_label": "red"
+    },
+    "left": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "black goalkeeper kit (black shirt, black shorts, black socks)",
+      "color_label": "black"
+    }
+  },
+  "game_8_H1": {
+    "left": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "red shirts with yellow accents, red shorts, red socks",
+      "color_label": "red"
+    },
+    "goalkeeper_left": {
+      "description": "dark blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_right": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_8_H2": {
+    "right": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "left": {
+      "description": "red shirts with yellow accents, red shorts, red socks",
+      "color_label": "red"
+    },
+    "goalkeeper_right": {
+      "description": "dark blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_left": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_9_H1": {
+    "left": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "dark blue shirts with yellow accents, dark shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_right": {
+      "description": "bright green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_left": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_9_H2": {
+    "right": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "left": {
+      "description": "dark blue shirts with yellow accents, dark shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_left": {
+      "description": "bright green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_10_H1": {
+    "left": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "black shirts, black shorts, black socks",
+      "color_label": "black"
+    },
+    "goalkeeper_left": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    },
+    "goalkeeper_right": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_10_H2": {
+    "right": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "left": {
+      "description": "black shirts, black shorts, black socks",
+      "color_label": "black"
+    },
+    "goalkeeper_right": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    },
+    "goalkeeper_left": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_11_H1": {
+    "left": {
+      "description": "yellow shirts, dark shorts, dark socks",
+      "color_label": "yellow"
+    },
+    "right": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "light blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_right": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    }
+  },
+  "game_11_H2": {
+    "right": {
+      "description": "yellow shirts, dark shorts, dark socks",
+      "color_label": "yellow"
+    },
+    "left": {
+      "description": "all white kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "goalkeeper_right": {
+      "description": "light blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_left": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    }
+  },
+  "game_12_H1": {
+    "left": {
+      "description": "light blue shirts, white shorts, white socks",
+      "color_label": "light_blue"
+    },
+    "right": {
+      "description": "black and white striped shirts, dark shorts, dark socks",
+      "color_label": "striped_bw"
+    },
+    "goalkeeper_left": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_12_H2": {
+    "left": {
+      "description": "black and white striped shirts, dark shorts, dark socks",
+      "color_label": "striped_bw"
+    },
+    "right": {
+      "description": "light blue shirts, white shorts, white socks",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    }
+  },
+  "game_13_H1": {
+    "left": {
+      "description": "light blue shirts, white shorts, white socks",
+      "color_label": "light_blue"
+    },
+    "right": {
+      "description": "black and white striped shirts, dark shorts, dark socks",
+      "color_label": "striped_bw"
+    },
+    "goalkeeper_left": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_13_H2": {
+    "left": {
+      "description": "black and white striped shirts, dark shorts, dark socks",
+      "color_label": "striped_bw"
+    },
+    "right": {
+      "description": "light blue shirts, white shorts, white socks",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    }
+  },
+  "game_14_H1": {
+    "left": {
+      "description": "black shirts, dark shorts, dark socks",
+      "color_label": "black"
+    },
+    "right": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    },
+    "goalkeeper_right": {
+      "description": "light sea blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "light_blue"
+    }
+  },
+  "game_14_H2": {
+    "left": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "black shirts, dark shorts, dark socks",
+      "color_label": "black"
+    },
+    "goalkeeper_left": {
+      "description": "light sea blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_right": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    }
+  },
+  "game_15_H1": {
+    "left": {
+      "description": "dark navy shirts, dark shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "right": {
+      "description": "light blue shirts, white shorts, white socks",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_left": {
+      "description": "olive green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    }
+  },
+  "game_15_H2": {
+    "left": {
+      "description": "light blue shirts, white shorts, white socks",
+      "color_label": "light_blue"
+    },
+    "right": {
+      "description": "dark navy shirts, dark shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_left": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    },
+    "goalkeeper_right": {
+      "description": "olive green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_16_H1": {
+    "left": {
+      "description": "lilac purple shirts, white shorts, purple socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "light sea blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_right": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    }
+  },
+  "game_16_H2": {
+    "left": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "lilac purple shirts, white shorts, purple socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    },
+    "goalkeeper_right": {
+      "description": "light sea blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "light_blue"
+    }
+  },
+  "game_17_H1": {
+    "left": {
+      "description": "light kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "dark blue and red shirts, dark shorts, dark socks",
+      "color_label": "blue_red"
+    },
+    "goalkeeper_left": {
+      "description": "light orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    },
+    "goalkeeper_right": {
+      "description": "blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "dark_blue"
+    }
+  },
+  "game_17_H2": {
+    "left": {
+      "description": "dark blue and red shirts, dark shorts, dark socks",
+      "color_label": "blue_red"
+    },
+    "right": {
+      "description": "light kit (white shirts, white shorts, white socks)",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_right": {
+      "description": "light orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    }
+  },
+  "game_19_H1": {
+    "left": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "red shirts, dark shorts, dark socks",
+      "color_label": "red"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "dark_blue"
+    }
+  },
+  "game_19_H2": {
+    "left": {
+      "description": "red shirts, dark shorts, dark socks",
+      "color_label": "red"
+    },
+    "right": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_20_H1": {
+    "left": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "red shirts, dark shorts, dark socks",
+      "color_label": "red"
+    },
+    "goalkeeper_left": {
+      "description": "light blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_right": {
+      "description": "dark blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "dark_blue"
+    }
+  },
+  "game_20_H2": {
+    "left": {
+      "description": "red shirts, dark shorts, dark socks",
+      "color_label": "red"
+    },
+    "right": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "dark blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_right": {
+      "description": "light blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "light_blue"
+    }
+  },
+  "game_21_H1": {
+    "left": {
+      "description": "blue shirts, dark shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "right": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "red goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "red"
+    }
+  },
+  "game_21_H2": {
+    "left": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "blue shirts, dark shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_left": {
+      "description": "red goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "red"
+    },
+    "goalkeeper_right": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_22_H1": {
+    "left": {
+      "description": "orange shirts, orange shorts, orange socks",
+      "color_label": "orange"
+    },
+    "right": {
+      "description": "light blue shirts, white shorts, white socks",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_left": {
+      "description": "emerald green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "black goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "black"
+    }
+  },
+  "game_22_H2": {
+    "left": {
+      "description": "light blue shirts, white shorts, white socks",
+      "color_label": "light_blue"
+    },
+    "right": {
+      "description": "orange shirts, orange shorts, orange socks",
+      "color_label": "orange"
+    },
+    "goalkeeper_left": {
+      "description": "black goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "black"
+    },
+    "goalkeeper_right": {
+      "description": "emerald green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_23_H1": {
+    "left": {
+      "description": "black and white shirts, black shorts, white socks",
+      "color_label": "striped_bw"
+    },
+    "right": {
+      "description": "yellow shirts, yellow shorts, yellow socks",
+      "color_label": "yellow"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    }
+  },
+  "game_23_H2": {
+    "left": {
+      "description": "yellow shirts, yellow shorts, yellow socks",
+      "color_label": "yellow"
+    },
+    "right": {
+      "description": "black and white shirts, black shorts, white socks",
+      "color_label": "striped_bw"
+    },
+    "goalkeeper_left": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_25_H1": {
+    "left": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "black shirts, white shorts, dark socks",
+      "color_label": "black"
+    },
+    "goalkeeper_left": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    }
+  },
+  "game_25_H2": {
+    "left": {
+      "description": "black shirts, white shorts, dark socks",
+      "color_label": "black"
+    },
+    "right": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "bright orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    },
+    "goalkeeper_right": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_26_H1": {
+    "left": {
+      "description": "red and black shirts, dark shorts, dark socks",
+      "color_label": "red_black"
+    },
+    "right": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_26_H2": {
+    "left": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "red and black shirts, dark shorts, dark socks",
+      "color_label": "red_black"
+    },
+    "goalkeeper_left": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_27_H1": {
+    "left": {
+      "description": "red shirts, white shorts, red socks",
+      "color_label": "red"
+    },
+    "right": {
+      "description": "black and white vertical striped shirts, black shorts, black socks",
+      "color_label": "striped_bw"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_27_H2": {
+    "left": {
+      "description": "black and white vertical striped shirts, black shorts, black socks",
+      "color_label": "striped_bw"
+    },
+    "right": {
+      "description": "red shirts, white shorts, red socks",
+      "color_label": "red"
+    },
+    "goalkeeper_left": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_28_H1": {
+    "left": {
+      "description": "light blue shirts, white shorts, light blue socks",
+      "color_label": "light_blue"
+    },
+    "right": {
+      "description": "red and white striped shirts, blue shorts, red socks",
+      "color_label": "red_white"
+    },
+    "goalkeeper_left": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "bright green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_28_H2": {
+    "left": {
+      "description": "red and white striped shirts, blue shorts, red socks",
+      "color_label": "red_white"
+    },
+    "right": {
+      "description": "light blue shirts, white shorts, light blue socks",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_left": {
+      "description": "bright green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "bright yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_29_H1": {
+    "left": {
+      "description": "red shirts, white shorts, white socks",
+      "color_label": "red"
+    },
+    "right": {
+      "description": "dark blue-green shirts, dark shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon lime green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_29_H2": {
+    "left": {
+      "description": "dark blue-green shirts, dark shorts, dark socks",
+      "color_label": "dark_blue"
+    },
+    "right": {
+      "description": "red shirts, white shorts, white socks",
+      "color_label": "red"
+    },
+    "goalkeeper_left": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon lime green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_30_H1": {
+    "left": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "gray shirts, gray shorts, gray socks",
+      "color_label": "gray"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "blue"
+    }
+  },
+  "game_30_H2": {
+    "left": {
+      "description": "gray shirts, gray shorts, gray socks",
+      "color_label": "gray"
+    },
+    "right": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "blue"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_31_H1": {
+    "left": {
+      "description": "black shirts, black shorts, white socks",
+      "color_label": "black"
+    },
+    "right": {
+      "description": "white shirts, white shorts, black socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_31_H2": {
+    "left": {
+      "description": "white shirts, white shorts, black socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "black shirts, black shorts, white socks",
+      "color_label": "black"
+    },
+    "goalkeeper_left": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_32_H1": {
+    "left": {
+      "description": "light blue shirts, light blue shorts, white socks",
+      "color_label": "light_blue"
+    },
+    "right": {
+      "description": "red and white shirts, white shorts, red socks",
+      "color_label": "red_white"
+    },
+    "goalkeeper_left": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "gray shirt, white shorts",
+      "color_label": "gray"
+    }
+  },
+  "game_32_H2": {
+    "left": {
+      "description": "red and white shirts, white shorts, red socks",
+      "color_label": "red_white"
+    },
+    "right": {
+      "description": "light blue shirts, light blue shorts, white socks",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_left": {
+      "description": "gray shirt, white shorts",
+      "color_label": "gray"
+    },
+    "goalkeeper_right": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_33_H1": {
+    "left": {
+      "description": "dark gray shirts, dark gray shorts, dark gray socks",
+      "color_label": "dark_gray"
+    },
+    "right": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "blue"
+    }
+  },
+  "game_33_H2": {
+    "left": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "dark gray shirts, dark gray shorts, dark gray socks",
+      "color_label": "dark_gray"
+    },
+    "goalkeeper_left": {
+      "description": "blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "blue"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_34_H1": {
+    "left": {
+      "description": "purple shirts, black shorts, blue socks",
+      "color_label": "purple"
+    },
+    "right": {
+      "description": "red shirts, white shorts, white socks",
+      "color_label": "red"
+    },
+    "goalkeeper_left": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_34_H2": {
+    "left": {
+      "description": "red shirts, white shorts, white socks",
+      "color_label": "red"
+    },
+    "right": {
+      "description": "purple shirts, black shorts, blue socks",
+      "color_label": "purple"
+    },
+    "goalkeeper_left": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_35_H1": {
+    "left": {
+      "description": "light blue shirts, white shorts, blue socks",
+      "color_label": "light_blue"
+    },
+    "right": {
+      "description": "black shirts, black shorts, black socks",
+      "color_label": "black"
+    },
+    "goalkeeper_left": {
+      "description": "red goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "red"
+    },
+    "goalkeeper_right": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_35_H2": {
+    "left": {
+      "description": "black shirts, black shorts, black socks",
+      "color_label": "black"
+    },
+    "right": {
+      "description": "light blue shirts, white shorts, blue socks",
+      "color_label": "light_blue"
+    },
+    "goalkeeper_left": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "red goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "red"
+    }
+  },
+  "game_37_H1": {
+    "left": {
+      "description": "dark blue shirts, white shorts, white socks",
+      "color_label": "dark_blue"
+    },
+    "right": {
+      "description": "red and blue striped shirts, white shorts, white socks",
+      "color_label": "blue_red"
+    },
+    "goalkeeper_left": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_37_H2": {
+    "left": {
+      "description": "red and blue striped shirts, white shorts, white socks",
+      "color_label": "blue_red"
+    },
+    "right": {
+      "description": "dark blue shirts, white shorts, white socks",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_left": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_38_H1": {
+    "left": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "right": {
+      "description": "light gray shirts, light gray shorts, light gray socks",
+      "color_label": "light_gray"
+    },
+    "goalkeeper_left": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "red goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "red"
+    }
+  },
+  "game_38_H2": {
+    "left": {
+      "description": "light gray shirts, light gray shorts, light gray socks",
+      "color_label": "light_gray"
+    },
+    "right": {
+      "description": "white shirts, white shorts, white socks",
+      "color_label": "white"
+    },
+    "goalkeeper_left": {
+      "description": "red goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "red"
+    },
+    "goalkeeper_right": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_39_H1": {
+    "left": {
+      "description": "dark blue shirts, dark blue shorts, dark blue socks",
+      "color_label": "dark_blue"
+    },
+    "right": {
+      "description": "white shirts with black stripes, white shorts, white socks",
+      "color_label": "white_black"
+    },
+    "goalkeeper_left": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_39_H2": {
+    "left": {
+      "description": "white shirts with black stripes, white shorts, white socks",
+      "color_label": "white_black"
+    },
+    "right": {
+      "description": "dark blue shirts, dark blue shorts, dark blue socks",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_40_H1": {
+    "left": {
+      "description": "orange-red shirts, white shorts, red socks, white boots",
+      "color_label": "orange_red"
+    },
+    "right": {
+      "description": "dark blue shirts with purple accents, dark blue shorts, dark blue socks",
+      "color_label": "dark_blue"
+    },
+    "goalkeeper_left": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    },
+    "goalkeeper_right": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    }
+  },
+  "game_40_H2": {
+    "left": {
+      "description": "dark blue shirts with purple accents, dark blue shorts, dark blue socks",
+      "color_label": "dark_blue"
+    },
+    "right": {
+      "description": "orange-red shirts, white shorts, red socks, white boots",
+      "color_label": "orange_red"
+    },
+    "goalkeeper_left": {
+      "description": "bright neon green goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "green"
+    },
+    "goalkeeper_right": {
+      "description": "yellow goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "yellow"
+    }
+  },
+  "game_41_H1": {
+    "left": {
+      "description": "green shirts, white shorts, white socks",
+      "color_label": "green"
+    },
+    "right": {
+      "description": "yellow shirts, black shorts, black socks",
+      "color_label": "yellow"
+    },
+    "goalkeeper_left": {
+      "description": "blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "blue"
+    },
+    "goalkeeper_right": {
+      "description": "orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    }
+  },
+  "game_41_H2": {
+    "left": {
+      "description": "yellow shirts, black shorts, black socks",
+      "color_label": "yellow"
+    },
+    "right": {
+      "description": "green shirts, white shorts, white socks",
+      "color_label": "green"
+    },
+    "goalkeeper_left": {
+      "description": "orange goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "orange"
+    },
+    "goalkeeper_right": {
+      "description": "blue goalkeeper kit (shirt, shorts, socks)",
+      "color_label": "blue"
+    }
+  }
+}
