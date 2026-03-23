@@ -82,6 +82,9 @@ from IPython.display import display
 from src.classification_clustering import run_clustering
 from src.extract_embeddings import extract_all_finetuned, extract_all_models
 
+from sklearn.preprocessing import LabelEncoder
+from src.metrics import clustering_accuracy, macro_f1_clustering
+
 
 def flip_lr_label(label: str) -> str:
     if label == "team_left":
@@ -256,3 +259,100 @@ def remove_game_from_benchmark(game, csv_path="benchmark.csv"):
     df.to_csv(csv_path, index=False)
     print(f"Rows removed: {before - after}  |  remaining: {after}")
     print(f"Games in file: {sorted(df['game'].unique())}")
+
+
+
+# ============== video inference ===================
+
+def _canonicalize_gt(role_name: str, left2right) -> str:
+    rn = str(role_name).strip().lower()
+    if "goalkeeper" in rn:
+        return "goalkeeper"
+    try:
+        l2r = int(left2right)
+    except (ValueError, TypeError):
+        return "goalkeeper"
+    return "team_left" if l2r == 1 else "team_right"
+
+
+def evaluate_video_inference(
+    game_ids: list[str],
+    clips_dir: str,
+    labeled_filename: str = "players_labeled.csv",
+    players_filename: str = "players.csv",
+) -> pd.DataFrame:
+    rows = []
+
+    for game_id in game_ids:
+        labeled_path = Path(clips_dir) / game_id / labeled_filename
+        players_path = Path(clips_dir) / game_id / players_filename
+
+        _empty = {"game_id": game_id, "n_rows": 0, "n_tracks": 0,
+                  "clustering_accuracy": np.nan, "macro_f1_cluster": np.nan,
+                  "gt_dist": "", "pred_dist": ""}
+
+        if not labeled_path.exists() or not players_path.exists():
+            rows.append(_empty)
+            continue
+
+        labeled = pd.read_csv(labeled_path)
+        players = pd.read_csv(players_path)
+
+        merged = labeled.merge(
+            players[["frame_idx", "player_id", "role_name", "left2right"]],
+            on=["frame_idx", "player_id"],
+            how="inner",
+        )
+        merged = merged[
+            merged["role_name"].notna() &
+            merged["role_label"].notna() &
+            (merged["role_label"] != "unknown")
+        ].copy()
+
+        if len(merged) == 0:
+            rows.append(_empty)
+            continue
+
+        merged["gt_role"] = merged.apply(
+            lambda r: _canonicalize_gt(r["role_name"], r["left2right"]),
+            axis=1,
+        )
+
+        majority = lambda s: s.value_counts().idxmax()
+        track_df = (
+            merged.groupby("track_id")
+            .agg(gt_role=("gt_role", majority), role_label=("role_label", majority))
+            .reset_index()
+        )
+
+        all_labels = sorted(
+            set(track_df["gt_role"].unique()) | set(track_df["role_label"].unique())
+        )
+        le = LabelEncoder()
+        le.fit(all_labels)
+
+        y_true    = le.transform(track_df["gt_role"].values)
+        y_cluster = le.transform(track_df["role_label"].values)
+
+        acc      = clustering_accuracy(y_true, y_cluster)
+        macro_f1 = macro_f1_clustering(y_true, y_cluster)
+
+        def _dist_str(labels):
+            vals, cnts = np.unique(labels, return_counts=True)
+            return "  ".join(f"{le.classes_[v]}:{c}" for v, c in zip(vals, cnts))
+
+        rows.append({
+            "game_id":             game_id,
+            "n_rows":              len(merged),
+            "n_tracks":            len(track_df),
+            "clustering_accuracy": round(acc, 4),
+            "macro_f1_cluster":    round(macro_f1, 4),
+            "gt_dist":             _dist_str(y_true),
+            "pred_dist":           _dist_str(y_cluster),
+        })
+
+    return (
+        pd.DataFrame(rows)
+        .sort_values("macro_f1_cluster", ascending=False)
+        .reset_index(drop=True)
+    )
