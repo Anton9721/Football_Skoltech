@@ -69,7 +69,8 @@ load_finetuned_model(
     Output: FeatureExtractor
     Raises: ValueError for unknown base_name
 """
-
+import cv2
+import numpy as np
 import clip
 import timm
 import torch
@@ -107,6 +108,72 @@ class CLIPExtractor:
             emb = self.model.encode_image(images)
         emb = emb / emb.norm(dim=-1, keepdim=True)
         return emb.float()
+    
+class ColorHistogramExtractor:
+    _MEAN = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+    _STD  = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
+
+    def __init__(
+        self,
+        n_bins: int = 32,
+        torso_crop_frac: float = 0.5,
+        sat_thresh: int = 30,
+        use_saturation: bool = False,
+    ):
+        self.n_bins          = n_bins
+        self.torso_crop_frac = torso_crop_frac
+        self.sat_thresh      = sat_thresh
+        self.use_saturation  = use_saturation
+
+    def _tensor_to_hsv(self, img_tensor):
+        img = (img_tensor.cpu() * self._STD + self._MEAN).clamp(0, 1)
+        img_np = (img.permute(1, 2, 0).numpy() * 255).astype(np.uint8)
+
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+        img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+        return img_hsv
+
+    def _compute_histogram(self, img_hsv):
+        H, W, _ = img_hsv.shape
+
+        crop_h = max(1, int(H * self.torso_crop_frac))
+        region = img_hsv[:crop_h, :, :]
+
+        h_ch = region[:, :, 0]
+        s_ch = region[:, :, 1]
+
+        mask = s_ch >= self.sat_thresh
+
+        h_vals = h_ch[mask] 
+
+        if len(h_vals) == 0:
+            dim = self.n_bins * 2 if self.use_saturation else self.n_bins
+            return np.zeros(dim, dtype=np.float32)
+
+        h_hist, _ = np.histogram(h_vals, bins=self.n_bins, range=(0, 180))
+
+        if self.use_saturation:
+            s_vals = s_ch[mask]
+            s_hist, _ = np.histogram(s_vals, bins=self.n_bins, range=(0, 256))
+            feat = np.concatenate([h_hist, s_hist]).astype(np.float32)
+        else:
+            feat = h_hist.astype(np.float32)
+
+        norm = np.linalg.norm(feat)
+        if norm > 1e-12:
+            feat = feat / norm
+
+        return feat
+
+    def __call__(self, images):
+
+        feats = []
+        for i in range(images.shape[0]):
+            img_hsv = self._tensor_to_hsv(images[i])
+            feat    = self._compute_histogram(img_hsv)
+            feats.append(feat)
+
+        return torch.from_numpy(np.stack(feats))
 
 
 def load_model(name, device="cuda"):
@@ -150,6 +217,16 @@ def load_model(name, device="cuda"):
         model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitl14")
         model.eval()
         return FeatureExtractor(model, device)
+    
+    if name.startswith("color_hist"):
+        n_bins = 64 if "64" in name else 32
+        use_sat = "sat" in name
+        return ColorHistogramExtractor(
+            n_bins=n_bins,
+            torso_crop_frac=0.5,
+            sat_thresh=30,
+            use_saturation=use_sat,
+        )
 
     raise ValueError(f"unknown model: {name}")
 
